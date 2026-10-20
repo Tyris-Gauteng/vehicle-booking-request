@@ -1,0 +1,1000 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Vehicle Booking Request – Tyris Gauteng</title>
+<meta name="description" content="Tyris Gauteng – request the Crane Truck, VW Truck or Ops Bakkie.">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Tyris Gauteng">
+<meta property="og:title" content="Vehicle Booking Request">
+<meta property="og:description" content="Tyris Gauteng – request the Crane Truck, VW Truck or Ops Bakkie.">
+<meta property="og:url" content="https://cranetruck500.github.io/vehicle-booking-request/">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Vehicle Booking Request">
+<style>
+  :root {
+    --brand:#1B3F8B;--brand-mid:#1B4FA8;--brand-lite:#E8EEF8;
+    --danger:#DC2626;--success:#16A34A;--warning:#D97706;--teal:#0F766E;
+    --text:#1A1A2E;--muted:#6B7280;--border:#D1D5DB;--surface:#FFFFFF;
+    --page-bg:#F0F4FA;--shadow:0 2px 12px rgba(27,63,139,.10);--radius:10px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--page-bg);color:var(--text);min-height:100vh;}
+  main{position:relative;z-index:1;max-width:780px;margin:0 auto;padding:28px 16px 60px;}
+  header{background:var(--brand);color:#fff;padding:0 14px;min-height:56px;display:flex;align-items:center;justify-content:space-between;gap:10px;box-shadow:0 2px 10px rgba(0,0,0,.25);position:sticky;top:0;z-index:100;}
+  .header-subtitle{font-size:15px;font-weight:700;color:#fff;white-space:nowrap;}
+  .header-subtitle .sub2{color:rgba(255,255,255,.7);font-weight:400;font-size:12px;display:block;margin-top:1px;}
+  nav{display:flex;gap:3px;}
+  nav button{background:transparent;border:1.5px solid rgba(255,255,255,.35);color:#fff;padding:5px 10px;border-radius:20px;font-size:11px;cursor:pointer;transition:background .15s;white-space:nowrap;font-family:inherit;}
+  nav button:hover{background:rgba(255,255,255,.12);}
+  nav button.active{background:rgba(255,255,255,.20);border-color:rgba(255,255,255,.75);font-weight:600;}
+  .view{display:none;}.view.active{display:block;}
+  .card{background:var(--surface);border-radius:var(--radius);box-shadow:var(--shadow);padding:28px;margin-bottom:16px;}
+  .card-title-bar{background:linear-gradient(135deg,var(--brand),var(--brand-mid));color:#fff;border-radius:var(--radius) var(--radius) 0 0;padding:22px 28px 18px;margin:-28px -28px 24px;}
+  .card-title-bar h1{font-size:22px;font-weight:700;}
+  .card-title-bar p{font-size:13px;opacity:.8;margin-top:4px;}
+  .field{margin-bottom:22px;}
+  .field > label,.field-label{display:block;font-size:14px;font-weight:600;margin-bottom:6px;}
+  .req{color:var(--danger);margin-left:3px;}
+  .field input[type="text"],.field input[type="date"],.field input[type="time"],.field select,.field textarea{width:100%;padding:10px 13px;border:1.5px solid var(--border);border-radius:7px;font-size:14px;color:var(--text);background:#fff;outline:none;font-family:inherit;transition:border-color .15s,box-shadow .15s;}
+  .field input:focus,.field select:focus,.field textarea:focus{border-color:var(--brand-mid);box-shadow:0 0 0 3px rgba(27,79,168,.12);}
+  .field .invalid,.veh-options.invalid,.options.invalid{border-color:var(--danger)!important;}
+  .veh-options.invalid,.options.invalid{outline:2px solid #FCA5A5;outline-offset:3px;border-radius:9px;}
+  .field textarea{resize:vertical;min-height:90px;}
+  .field-row{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+  .options{display:flex;flex-direction:column;gap:10px;}
+  .options label{display:flex;align-items:center;gap:10px;font-weight:400;cursor:pointer;padding:9px 13px;border:1.5px solid var(--border);border-radius:7px;transition:background .12s;font-size:14px;flex-wrap:wrap;}
+  .options label:hover{background:var(--brand-lite);border-color:var(--brand-mid);}
+  .options label input{accent-color:var(--brand-mid);width:16px;height:16px;flex-shrink:0;}
+  .options label.checked{background:var(--brand-lite);border-color:var(--brand-mid);}
+  .other-input{display:none;margin-top:4px;width:100%;padding:8px 12px;border:1.5px solid var(--border);border-radius:6px;font-size:14px;font-family:inherit;outline:none;}
+  .other-input.visible{display:block;}
+
+  /* Vehicle picker */
+  .veh-options{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;}
+  .veh-opt{position:relative;display:flex;flex-direction:column;align-items:center;gap:5px;padding:18px 6px 12px;border:2px solid var(--border);border-radius:9px;cursor:pointer;text-align:center;background:#fff;overflow:hidden;transition:border-color .12s,background .12s;}
+  .veh-opt input{position:absolute;opacity:0;pointer-events:none;}
+  .veh-opt .veh-swatch{position:absolute;top:0;left:0;right:0;height:7px;background:var(--vc);}
+  .veh-opt .veh-icon{font-size:28px;line-height:1;}
+  .veh-opt .veh-name{font-size:13px;font-weight:700;color:var(--text);}
+  .veh-opt .veh-colour{font-size:11px;color:var(--muted);}
+  .veh-opt:hover{border-color:var(--vc);}
+  .veh-opt:focus-within{outline:2px solid var(--brand-mid);outline-offset:2px;}
+  .veh-opt.checked{border-color:var(--vc);background:var(--vt);}
+  .veh-opt.checked::after{content:'✓';position:absolute;top:12px;right:8px;width:20px;height:20px;border-radius:50%;background:var(--vc);color:var(--vx);font-size:12px;font-weight:800;display:flex;align-items:center;justify-content:center;}
+  .veh-chip{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:20px;font-size:12px;font-weight:700;white-space:nowrap;}
+
+  /* Same-day schedule on the form */
+  .day-sched{margin:-6px 0 22px;background:#F8FAFC;border:1.5px solid var(--border);border-radius:8px;padding:10px 14px;font-size:13px;display:none;}
+  .day-sched h4{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px;font-weight:700;}
+  .sched-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:5px 0;border-top:1px solid #EEF1F5;}
+  .sched-row:first-of-type{border-top:none;}
+  .sched-empty{color:var(--muted);}
+
+  .form-actions{display:flex;gap:12px;margin-top:8px;flex-wrap:wrap;}
+  .form-error{display:none;background:#FEE2E2;border:1.5px solid #FCA5A5;color:#991B1B;border-radius:8px;padding:10px 14px;font-size:13px;margin-bottom:16px;}
+  .form-error.visible{display:block;}
+  .btn-primary{background:var(--brand);color:#fff;border:none;padding:11px 28px;border-radius:7px;font-size:15px;font-weight:600;cursor:pointer;transition:background .15s;font-family:inherit;}
+  .btn-primary:hover{background:var(--brand-mid);}
+  .btn-primary:disabled{opacity:.6;cursor:wait;}
+  .btn-ghost{background:transparent;color:var(--brand);border:1.5px solid var(--brand);padding:11px 22px;border-radius:7px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;}
+  .btn-ghost:hover{background:var(--brand-lite);}
+  .btn-approve{background:var(--success);color:#fff;border:none;padding:8px 18px;border-radius:6px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;}
+  .btn-decline{background:var(--danger);color:#fff;border:none;padding:8px 18px;border-radius:6px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;}
+  .btn-reset{background:#F3F4F6;color:var(--muted);border:none;padding:8px 14px;border-radius:6px;font-size:13px;cursor:pointer;font-family:inherit;}
+  .btn-complete{background:var(--teal);color:#fff;border:none;padding:9px 18px;border-radius:7px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;}
+  .btn-mini{font-size:11px;padding:4px 10px;background:#FEF3C7;color:#92400E;border:none;border-radius:5px;cursor:pointer;font-family:inherit;}
+  #toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%) translateY(80px);color:#fff;padding:12px 24px;border-radius:8px;font-size:14px;font-weight:600;box-shadow:0 4px 16px rgba(0,0,0,.2);transition:transform .3s,opacity .3s;opacity:0;pointer-events:none;z-index:999;max-width:calc(100vw - 32px);text-align:center;}
+  #toast.show{transform:translateX(-50%) translateY(0);opacity:1;}
+  #loading{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(255,255,255,.9);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:200;padding:24px;text-align:center;}
+  #loading .spinner{width:40px;height:40px;border:4px solid var(--brand-lite);border-top-color:var(--brand);border-radius:50%;animation:spin .8s linear infinite;margin-bottom:14px;}
+  #loading p{font-size:14px;color:var(--muted);font-weight:600;max-width:420px;line-height:1.5;}
+  #loading.error .spinner{display:none;}
+  #loading.error p{color:#991B1B;}
+  @keyframes spin{to{transform:rotate(360deg);}}
+  .badge{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:20px;font-size:12px;font-weight:700;white-space:nowrap;}
+  .badge.pending{background:#FEF3C7;color:#92400E;}
+  .badge.approved{background:#DCFCE7;color:#166534;}
+  .badge.declined{background:#FEE2E2;color:#991B1B;}
+  .summary-bar{display:flex;gap:12px;margin-bottom:20px;flex-wrap:wrap;}
+  .stat{flex:1;min-width:90px;background:var(--surface);border-radius:var(--radius);box-shadow:var(--shadow);padding:14px 16px;text-align:center;}
+  .stat .num{font-size:26px;font-weight:800;color:var(--brand);}
+  .stat .lbl{font-size:11px;color:var(--muted);margin-top:2px;}
+  .filters{background:var(--surface);border-radius:var(--radius);box-shadow:var(--shadow);padding:14px 18px;margin-bottom:16px;display:flex;gap:10px;flex-wrap:wrap;align-items:center;}
+  .filters input,.filters select{padding:7px 11px;border:1.5px solid var(--border);border-radius:6px;font-size:13px;outline:none;font-family:inherit;background:#fff;}
+  .filters input{flex:1;min-width:160px;}
+  .booking-list{display:flex;flex-direction:column;gap:12px;}
+  .booking-card{background:var(--surface);border-radius:var(--radius);box-shadow:var(--shadow);border-left:6px solid var(--brand-mid);padding:16px 18px;}
+  .booking-card.status-declined{opacity:.75;}
+  .bc-header{display:flex;justify-content:space-between;align-items:flex-start;gap:8px;flex-wrap:wrap;}
+  .bc-site{font-size:15px;font-weight:700;color:var(--brand);}
+  .bc-date{font-size:13px;color:var(--muted);white-space:nowrap;}
+  .bc-route{font-size:13px;color:var(--muted);margin-top:5px;}
+  .bc-route strong{color:var(--text);}
+  .bc-meta{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;align-items:center;}
+  .tag{background:var(--brand-lite);color:var(--brand);border-radius:20px;padding:3px 10px;font-size:12px;font-weight:600;}
+  .tag.time{background:#FEF3C7;color:#92400E;}
+  .tag.load{background:#F3F4F6;color:#374151;}
+  .bc-notes{margin-top:8px;font-size:13px;color:var(--muted);font-style:italic;}
+  .bc-reason{margin-top:6px;font-size:12px;color:#991B1B;font-style:italic;}
+  .bc-submitter{margin-top:6px;font-size:12px;color:#9CA3AF;}
+  .completed-stamp{display:inline-flex;align-items:center;gap:6px;background:#CCFBF1;color:#0F766E;border-radius:7px;padding:7px 14px;font-size:13px;font-weight:700;}
+  .clash-warning{background:#FEF3C7;border:1.5px solid #D97706;border-radius:8px;padding:10px 14px;font-size:13px;color:#92400E;margin:-6px 0 22px;display:none;}
+  .clash-warning.block{background:#FEE2E2;border-color:#DC2626;color:#991B1B;}
+  .export-bar{margin-top:20px;background:var(--surface);border-radius:var(--radius);box-shadow:var(--shadow);padding:14px 18px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+  .export-label{font-size:13px;font-weight:600;color:var(--muted);flex-shrink:0;}
+  .btn-export{padding:9px 18px;border:none;border-radius:7px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;}
+  .btn-csv{background:#E8F5E9;color:#1B5E20;}
+  .btn-xlsx{background:#E3F2FD;color:#0D47A1;}
+  .empty-state{text-align:center;padding:48px 20px;color:var(--muted);}
+  .empty-state .icon{font-size:40px;margin-bottom:12px;}
+
+  /* Calendar */
+  .cal-header{background:var(--surface);border-radius:var(--radius);box-shadow:var(--shadow);padding:16px 20px;margin-bottom:12px;display:flex;align-items:center;justify-content:space-between;gap:12px;}
+  .cal-title{font-size:18px;font-weight:700;color:var(--brand);flex:1;text-align:center;}
+  .cal-nav{background:var(--brand-lite);color:var(--brand);border:none;width:36px;height:36px;border-radius:50%;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;}
+  .cal-nav:hover{background:var(--brand-mid);color:#fff;}
+  .cal-filter{background:var(--surface);border-radius:var(--radius);box-shadow:var(--shadow);padding:10px 14px;margin-bottom:12px;display:flex;gap:8px;flex-wrap:wrap;align-items:center;}
+  .cal-filter .lbl{font-size:12px;font-weight:600;color:var(--muted);margin-right:2px;}
+  .fchip{display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border-radius:20px;border:1.5px solid var(--border);background:#fff;font-size:12px;font-weight:600;cursor:pointer;color:var(--text);font-family:inherit;}
+  .fchip .dot{width:11px;height:11px;border-radius:3px;}
+  .fchip.active{border-color:var(--brand);background:var(--brand-lite);color:var(--brand);}
+  .cal-grid-wrap{background:var(--surface);border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden;margin-bottom:16px;}
+  .cal-weekdays{display:grid;grid-template-columns:repeat(7,1fr);background:linear-gradient(135deg,var(--brand),var(--brand-mid));}
+  .cal-weekdays div{text-align:center;padding:10px 4px;font-size:12px;font-weight:700;color:rgba(255,255,255,.85);}
+  .cal-days{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:1px;background:var(--border);}
+  .cal-day{background:var(--surface);min-height:84px;padding:6px 5px 4px;cursor:default;transition:background .12s;min-width:0;}
+  .cal-day.other-month{background:#F8FAFC;}
+  .cal-day.other-month .day-num{color:#C9D0D8;}
+  .cal-day.today{background:#EBF0FA;}
+  .cal-day.today .day-num{background:var(--brand);color:#fff;border-radius:50%;font-weight:700;}
+  .cal-day.has-booking{cursor:pointer;}
+  .cal-day.has-booking:hover{background:var(--brand-lite);}
+  .cal-day.selected{box-shadow:inset 0 0 0 2px var(--brand-mid);}
+  .day-num{font-size:13px;font-weight:600;color:var(--text);margin-bottom:4px;width:24px;height:24px;display:flex;align-items:center;justify-content:center;}
+  .day-bookings{display:flex;flex-direction:column;gap:2px;}
+  .day-pill{border-radius:4px;padding:1px 4px;font-size:10px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;border:1px solid transparent;}
+  .day-pill .pill-site{font-weight:600;}
+  .day-more{font-size:10px;color:var(--muted);padding:1px 4px;font-weight:600;}
+  .day-detail{background:var(--surface);border-radius:var(--radius);box-shadow:var(--shadow);padding:20px;margin-bottom:16px;border-top:4px solid var(--brand-mid);display:none;}
+  .day-detail.visible{display:block;}
+  .day-detail h3{font-size:16px;font-weight:700;color:var(--brand);margin-bottom:14px;}
+  .detail-item{border:1.5px solid var(--border);border-left-width:6px;border-radius:8px;padding:12px 14px;margin-bottom:10px;}
+  .cal-legend{background:var(--surface);border-radius:var(--radius);box-shadow:var(--shadow);padding:12px 18px;display:flex;gap:14px;flex-wrap:wrap;align-items:center;font-size:12px;}
+  .cal-legend span.h{font-weight:600;color:var(--muted);}
+  .leg-item{display:flex;align-items:center;gap:6px;}
+  .leg-swatch{width:26px;height:13px;border-radius:3px;}
+
+  /* Approvals */
+  .pin-wrap{max-width:360px;margin:40px auto 0;background:var(--surface);border-radius:var(--radius);box-shadow:var(--shadow);padding:36px 32px;text-align:center;}
+  .pin-wrap h2{font-size:20px;font-weight:700;color:var(--brand);margin-bottom:6px;}
+  .pin-wrap p{font-size:13px;color:var(--muted);margin-bottom:22px;}
+  .pin-input{width:100%;padding:12px;text-align:center;letter-spacing:8px;font-size:22px;font-weight:700;border:2px solid var(--border);border-radius:8px;outline:none;font-family:inherit;margin-bottom:14px;}
+  .pin-input:focus{border-color:var(--brand-mid);}
+  .pin-error{color:var(--danger);font-size:13px;margin-bottom:10px;min-height:18px;}
+  .admin-header{background:linear-gradient(135deg,var(--brand),var(--brand-mid));color:#fff;border-radius:var(--radius);padding:18px 22px;margin-bottom:16px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;}
+  .admin-header h2{font-size:18px;font-weight:700;}
+  .admin-header p{font-size:13px;opacity:.8;margin-top:2px;}
+  .btn-logout{background:rgba(255,255,255,.2);color:#fff;border:1.5px solid rgba(255,255,255,.4);padding:8px 16px;border-radius:20px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;}
+  .admin-stats{display:flex;gap:12px;margin-bottom:16px;flex-wrap:wrap;}
+  .adm-stat{flex:1;min-width:90px;background:var(--surface);border-radius:var(--radius);box-shadow:var(--shadow);padding:14px 16px;text-align:center;}
+  .adm-stat .num{font-size:24px;font-weight:800;}
+  .adm-stat .lbl{font-size:11px;color:var(--muted);margin-top:2px;}
+  .adm-stat.pend .num{color:var(--warning);}.adm-stat.appr .num{color:var(--success);}.adm-stat.decl .num{color:var(--danger);}
+  .admin-card{background:var(--surface);border-radius:var(--radius);box-shadow:var(--shadow);padding:16px 18px;margin-bottom:12px;border-left:6px solid var(--warning);}
+  .admin-card.declined{opacity:.8;}
+  .ac-site{font-size:15px;font-weight:700;color:var(--brand);}
+  .ac-meta{font-size:13px;color:var(--muted);margin-top:6px;display:flex;gap:6px;flex-wrap:wrap;align-items:center;}
+  .ac-notes{font-size:12px;color:var(--muted);font-style:italic;margin-top:4px;}
+  .ac-by{font-size:12px;color:#9CA3AF;margin-top:4px;}
+  .approve-actions{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap;align-items:center;}
+  .reason-wrap{display:none;margin-top:8px;}
+  .reason-wrap.visible{display:block;}
+  .reason-input{width:100%;padding:8px 10px;border:1.5px solid var(--border);border-radius:6px;font-size:13px;font-family:inherit;outline:none;}
+  .modal-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.5);z-index:300;display:flex;align-items:center;justify-content:center;padding:16px;}
+  .modal-overlay.hidden{display:none;}
+  .modal{background:var(--surface);border-radius:var(--radius);box-shadow:0 8px 32px rgba(0,0,0,.25);padding:28px;width:100%;max-width:560px;max-height:90vh;overflow-y:auto;}
+  .modal h2{font-size:18px;font-weight:700;color:var(--brand);margin-bottom:6px;}
+  .modal p{font-size:13px;color:var(--muted);margin-bottom:20px;}
+  .modal-actions{display:flex;gap:10px;margin-top:20px;flex-wrap:wrap;}
+  .modal .field{margin-bottom:16px;}
+  .modal .field > label{font-size:13px;}
+
+  /* Odometer / hours */
+  .odo-unlock{margin-top:10px;}
+  .odo-unlock-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;}
+  .odo-pin-input{width:100px;padding:7px 10px;border:1.5px solid var(--border);border-radius:6px;font-size:14px;letter-spacing:4px;font-weight:700;text-align:center;outline:none;font-family:inherit;}
+  .odo-pin-input:focus{border-color:var(--brand-mid);}
+  .btn-odo-unlock{background:var(--teal);color:#fff;border:none;padding:8px 16px;border-radius:6px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;}
+  .odo-fields{display:none;margin-top:12px;background:#F0FDF4;border:1.5px solid #BBF7D0;border-radius:8px;padding:14px 16px;}
+  .odo-fields.visible{display:block;}
+  .odo-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;}
+  .odo-field label{display:block;font-size:12px;font-weight:600;color:var(--muted);margin-bottom:4px;}
+  .odo-field input{display:block;margin-top:4px;color:var(--text);font-weight:400;width:100%;padding:8px 10px;border:1.5px solid var(--border);border-radius:6px;font-size:14px;font-family:inherit;outline:none;}
+  .odo-field input:focus{border-color:var(--teal);box-shadow:0 0 0 3px rgba(15,118,110,.12);}
+  .odo-hint{font-size:11px;color:var(--muted);margin:-4px 0 10px;}
+  .odo-readings-display{margin-top:10px;background:#F0FDF4;border:1.5px solid #BBF7D0;border-radius:8px;padding:12px 14px;font-size:13px;}
+  .odo-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;font-weight:700;font-size:12px;color:#0F766E;}
+  .odo-kv{display:grid;grid-template-columns:1fr 1fr;gap:4px 24px;}
+  .odo-row{display:flex;justify-content:space-between;gap:8px;padding:3px 0;border-bottom:1px dashed #D1FAE5;}
+  .odo-kv > div:empty{border:none;}
+  .odo-label{color:var(--muted);font-size:12px;}
+  .odo-val{font-weight:700;color:#0F766E;}
+  .status-change-row{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;align-items:center;}
+  .status-change-row label{font-size:12px;font-weight:600;color:var(--muted);}
+  .status-select{padding:7px 10px;border:1.5px solid var(--border);border-radius:6px;font-size:13px;outline:none;font-family:inherit;}
+  .btn-status-save{background:var(--brand);color:#fff;border:none;padding:8px 16px;border-radius:6px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;}
+  @media(max-width:520px){
+    main{padding:20px 12px 60px;}
+    .odo-grid,.odo-kv{grid-template-columns:1fr;}
+    .odo-kv > div:empty{display:none;}
+    .card{padding:20px 16px;}.card-title-bar{margin:-20px -16px 20px;padding:18px 18px 14px;}
+    .card-title-bar h1{font-size:19px;}
+    .field-row{grid-template-columns:1fr;gap:0;}
+    .veh-options{gap:6px;}
+    .veh-opt{padding:16px 4px 10px;}
+    .veh-opt .veh-icon{font-size:24px;}
+    .veh-opt .veh-name{font-size:12px;}
+    .veh-opt.checked::after{top:11px;right:5px;width:17px;height:17px;font-size:10px;}
+    .cal-header{padding:12px 14px;}
+    .cal-day{min-height:62px;padding:3px 2px;}
+    .day-num{font-size:12px;width:22px;height:22px;}
+    .day-pill{font-size:9px;padding:1px 2px;text-align:center;}
+    .day-pill .pill-site{display:none;}
+    .cal-weekdays div{font-size:10px;padding:8px 0;}
+    header{flex-wrap:wrap;padding:8px 12px;row-gap:6px;}
+    nav{width:100%;justify-content:space-between;}
+    nav button{flex:1;padding:6px 4px;font-size:11px;}
+    .header-subtitle .sub2{display:none;}.admin-label{display:none;}
+    .filters{padding:12px;}
+  }
+</style>
+</head>
+<body>
+<div id="loading"><div class="spinner"></div><p id="loading-msg">Connecting to database…</p></div>
+<header>
+  <div class="header-subtitle">Tyris · Gauteng<span class="sub2">Vehicle Bookings</span></div>
+  <nav>
+    <button class="active" id="tab-form" data-view="form">New Booking</button>
+    <button id="tab-calendar" data-view="calendar">Calendar</button>
+    <button id="tab-list" data-view="list">Submissions</button>
+    <button id="tab-admin" data-view="admin">🔒 <span class="admin-label">Approvals</span></button>
+  </nav>
+</header>
+<main>
+  <!-- NEW BOOKING -->
+  <div id="view-form" class="view active">
+    <div class="card">
+      <div class="card-title-bar"><h1>Vehicle Booking Request</h1><p>Choose a vehicle and complete all required fields. Your booking will be reviewed by an approver.</p></div>
+      <div class="field"><label for="f-name">Your Name <span class="req">*</span></label><input type="text" id="f-name" placeholder="e.g. Jan van der Merwe" maxlength="100" autocomplete="name"></div>
+      <div class="field">
+        <span class="field-label">Vehicle <span class="req">*</span></span>
+        <div class="veh-options" id="veh-options" role="radiogroup" aria-label="Vehicle"></div>
+      </div>
+      <div class="field"><label for="f-site">Site Name / Location <span class="req">*</span></label><input type="text" id="f-site" placeholder="e.g. Woodmead Western Woods" maxlength="120"></div>
+      <div class="field-row">
+        <div class="field"><label for="f-from">From <span class="req">*</span></label><input type="text" id="f-from" placeholder="e.g. Yard / Depot" maxlength="120"></div>
+        <div class="field"><label for="f-to">To <span class="req">*</span></label><input type="text" id="f-to" placeholder="e.g. Delivery address" maxlength="120"></div>
+      </div>
+      <div class="field"><label for="f-date">Requested Date <span class="req">*</span></label><input type="date" id="f-date"></div>
+      <div class="field-row">
+        <div class="field"><label for="f-time">Start Time <span class="req">*</span></label><input type="time" id="f-time"></div>
+        <div class="field"><label for="f-endtime">End Time <span class="req">*</span></label><input type="time" id="f-endtime"></div>
+      </div>
+      <div id="clash-alert" class="clash-warning" role="status"></div>
+      <div id="day-sched" class="day-sched"></div>
+      <div class="field">
+        <span class="field-label">Load Type <span class="req">*</span></span>
+        <div class="options" id="load-options">
+          <label><input type="radio" name="loadtype" value="Container"> Container</label>
+          <label><input type="radio" name="loadtype" value="Plant / Machinery"> Plant / Machinery</label>
+          <label><input type="radio" name="loadtype" value="Materials"> Materials (Bricks, tiles, etc.)</label>
+          <label><input type="radio" name="loadtype" value="Other"> Other <input type="text" class="other-input" id="load-other-text" placeholder="Please specify…" maxlength="80"></label>
+        </div>
+      </div>
+      <div class="field"><label for="f-notes">Description / Notes</label><textarea id="f-notes" placeholder="Any special requirements, access instructions, or additional details…"></textarea></div>
+      <div class="form-error" id="form-error" role="alert"></div>
+      <div class="form-actions">
+        <button class="btn-primary" id="btn-submit">Submit Booking</button>
+        <button class="btn-ghost" id="btn-clear">Clear Form</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- CALENDAR -->
+  <div id="view-calendar" class="view">
+    <div class="cal-header">
+      <button class="cal-nav" id="cal-prev" aria-label="Previous month">&#8249;</button>
+      <div class="cal-title" id="cal-title"></div>
+      <button class="cal-nav" id="cal-next" aria-label="Next month">&#8250;</button>
+    </div>
+    <div class="cal-filter" id="cal-filter"></div>
+    <div class="cal-grid-wrap">
+      <div class="cal-weekdays"><div>Sun</div><div>Mon</div><div>Tue</div><div>Wed</div><div>Thu</div><div>Fri</div><div>Sat</div></div>
+      <div class="cal-days" id="cal-days"></div>
+    </div>
+    <div class="day-detail" id="day-detail"><h3 id="day-detail-title"></h3><div id="day-detail-list"></div></div>
+    <div class="cal-legend" id="cal-legend"></div>
+  </div>
+
+  <!-- SUBMISSIONS -->
+  <div id="view-list" class="view">
+    <div class="summary-bar">
+      <div class="stat"><div class="num" id="st-total">0</div><div class="lbl">Total</div></div>
+      <div class="stat"><div class="num" id="st-pending">0</div><div class="lbl">Pending</div></div>
+      <div class="stat"><div class="num" id="st-approved">0</div><div class="lbl">Approved</div></div>
+      <div class="stat"><div class="num" id="st-declined">0</div><div class="lbl">Declined</div></div>
+      <div class="stat"><div class="num" id="st-upcoming">0</div><div class="lbl">Upcoming</div></div>
+    </div>
+    <div class="filters">
+      <input type="text" id="f-search" placeholder="🔍 Search site or name…">
+      <select id="f-vehicle" aria-label="Vehicle filter"></select>
+      <select id="f-status" aria-label="Status filter"><option value="">All Statuses</option><option value="pending">Pending</option><option value="approved">Approved</option><option value="declined">Declined</option></select>
+    </div>
+    <div class="booking-list" id="booking-list"></div>
+    <div class="export-bar" id="export-bar" style="display:none">
+      <span class="export-label">Export records:</span>
+      <button class="btn-export btn-csv" id="btn-csv">⬇ Download CSV</button>
+      <button class="btn-export btn-xlsx" id="btn-xlsx">⬇ Download Excel</button>
+    </div>
+  </div>
+
+  <!-- APPROVALS -->
+  <div id="view-admin" class="view">
+    <div id="admin-login" class="pin-wrap">
+      <div style="font-size:40px;margin-bottom:12px">🔐</div>
+      <h2>Approver Access</h2>
+      <p>Enter your PIN to access the approval panel.</p>
+      <input type="password" class="pin-input" id="pin-input" maxlength="6" placeholder="••••" inputmode="numeric">
+      <div class="pin-error" id="pin-error"></div>
+      <button class="btn-primary" style="width:100%" id="btn-unlock">Unlock</button>
+    </div>
+    <div id="admin-panel" style="display:none">
+      <div class="admin-header">
+        <div><h2>🛠 Approvals Panel</h2><p>Review and action vehicle booking requests</p></div>
+        <button class="btn-logout" id="btn-lock">Lock Panel</button>
+      </div>
+      <div class="admin-stats">
+        <div class="adm-stat pend"><div class="num" id="adm-pend">0</div><div class="lbl">Pending</div></div>
+        <div class="adm-stat appr"><div class="num" id="adm-appr">0</div><div class="lbl">Approved</div></div>
+        <div class="adm-stat decl"><div class="num" id="adm-decl">0</div><div class="lbl">Declined</div></div>
+      </div>
+      <div class="filters">
+        <input type="text" id="adm-search" placeholder="🔍 Search…">
+        <select id="adm-vehicle" aria-label="Vehicle filter"></select>
+        <select id="adm-status" aria-label="Status filter">
+          <option value="pending">Pending only</option>
+          <option value="">All statuses</option>
+          <option value="approved">Approved</option>
+          <option value="declined">Declined</option>
+        </select>
+      </div>
+      <div id="admin-list"></div>
+    </div>
+  </div>
+</main>
+
+<!-- EDIT MODAL -->
+<div class="modal-overlay hidden" id="edit-modal">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="edit-modal-title">
+    <h2 id="edit-modal-title">Edit Booking</h2>
+    <p id="edit-modal-desc">Confirm your name to edit this pending booking.</p>
+    <div id="edit-name-verify" style="display:none">
+      <div class="field"><label for="edit-verify-name">Confirm your name <span class="req">*</span></label><input type="text" id="edit-verify-name" placeholder="Enter your name exactly as submitted..."></div>
+      <div style="color:var(--danger);font-size:13px;min-height:18px" id="edit-verify-error"></div>
+      <div class="modal-actions">
+        <button class="btn-primary" id="btn-verify">Continue</button>
+        <button class="btn-ghost" data-act="close-modal">Cancel</button>
+      </div>
+    </div>
+    <div id="edit-form-fields" style="display:none">
+      <div class="field"><label for="e-vehicle">Vehicle <span class="req">*</span></label><select id="e-vehicle"></select></div>
+      <div class="field"><label for="e-site">Site Name / Location <span class="req">*</span></label><input type="text" id="e-site" maxlength="120"></div>
+      <div class="field-row">
+        <div class="field"><label for="e-from">From <span class="req">*</span></label><input type="text" id="e-from" maxlength="120"></div>
+        <div class="field"><label for="e-to">To <span class="req">*</span></label><input type="text" id="e-to" maxlength="120"></div>
+      </div>
+      <div class="field"><label for="e-date">Requested Date <span class="req">*</span></label><input type="date" id="e-date"></div>
+      <div class="field-row">
+        <div class="field"><label for="e-time">Start Time <span class="req">*</span></label><input type="time" id="e-time"></div>
+        <div class="field"><label for="e-endtime">End Time <span class="req">*</span></label><input type="time" id="e-endtime"></div>
+      </div>
+      <div class="field">
+        <label for="e-loadtype">Load Type <span class="req">*</span></label>
+        <select id="e-loadtype">
+          <option value="Container">Container</option>
+          <option value="Plant / Machinery">Plant / Machinery</option>
+          <option value="Materials">Materials</option>
+          <option value="Other">Other</option>
+        </select>
+      </div>
+      <div class="field" id="e-other-wrap" style="display:none">
+        <label for="e-other-text">Specify load type</label>
+        <input type="text" id="e-other-text" maxlength="80" placeholder="Please specify...">
+      </div>
+      <div class="field"><label for="e-notes">Description / Notes</label><textarea id="e-notes"></textarea></div>
+      <div class="form-error" id="edit-error" role="alert"></div>
+      <div class="modal-actions">
+        <button class="btn-primary" id="btn-save-edit">Save Changes</button>
+        <button class="btn-ghost" data-act="close-modal">Cancel</button>
+      </div>
+    </div>
+  </div>
+</div>
+<div id="toast" role="status" aria-live="polite"></div>
+
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<script>
+/* ================================================================
+   VEHICLES — edit this list to add, rename or recolour vehicles.
+   id     : short code saved with each booking (don't change it once
+            bookings exist, or old bookings lose their vehicle)
+   color  : main colour (calendar, borders, chips)
+   text   : text colour to use on top of the main colour
+   tint   : light version of the colour (pending bookings, selection)
+   crane  : true = also record crane hours with the odometer
+   ================================================================ */
+var VEHICLES=[
+  {id:'crane',  name:'Crane Truck', colourName:'Blue',   color:'#2563EB', text:'#FFFFFF', tint:'#DBEAFE', icon:'🏗️', crane:true},
+  {id:'vw',     name:'VW Truck',    colourName:'Yellow', color:'#EAB308', text:'#1F1A00', tint:'#FEF9C3', icon:'🚚', crane:false},
+  {id:'bakkie', name:'Ops Bakkie',  colourName:'Green',  color:'#16A34A', text:'#FFFFFF', tint:'#DCFCE7', icon:'🛻', crane:false}
+];
+
+/* Same Firebase project as the crane booking site, but bookings are kept
+   in their own section ("vehicleBookings") so the two sites never mix. */
+var firebaseConfig={apiKey:"AIzaSyD68zIJdJcaAjqmCEnd_f4wlr8O_7vO38M",authDomain:"tyris-crane-booking.firebaseapp.com",databaseURL:"https://tyris-crane-booking-default-rtdb.europe-west1.firebasedatabase.app",projectId:"tyris-crane-booking",storageBucket:"tyris-crane-booking.firebasestorage.app",messagingSenderId:"557970814071",appId:"1:557970814071:web:6e886e2cba940c61fcc272"};
+var DB_PATH='vehicleBookings';
+var ADMIN_PIN='5005';
+var DRIVER_PIN='6512';
+
+var allBookings=[];
+var adminUnlocked=false;
+var bookingsRef=null;
+var dataLoaded=false;
+var odoUnlocked={};      // booking keys where the driver PIN was entered
+var declineOpen={};      // booking keys with the decline reason box open
+var odoEditOpen={};      // booking keys with the readings edit box open
+var calVehFilter='';
+var calSelected='';
+
+/* ---------- helpers ---------- */
+function $(id){return document.getElementById(id);}
+function esc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function pad(n){return String(n).padStart(2,'0');}
+function todayStr(){var d=new Date();return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());}
+function fmtDate(d){if(!d)return'—';var p=d.split('-');return p[2]+'/'+p[1]+'/'+p[0];}
+function fmtTime(t){if(!t)return'';var p=t.split(':');var h=parseInt(p[0],10);return(h%12||12)+':'+p[1]+' '+(h<12?'AM':'PM');}
+function fmtStamp(iso){if(!iso)return'';var d=new Date(iso);if(isNaN(d))return'';return d.toLocaleString('en-ZA',{dateStyle:'short',timeStyle:'short'});}
+function num(v){var n=parseFloat(v);return isNaN(n)?null:n;}
+function veh(id){for(var i=0;i<VEHICLES.length;i++){if(VEHICLES[i].id===id)return VEHICLES[i];}return {id:id||'',name:id||'Unknown vehicle',colourName:'Grey',color:'#6B7280',text:'#FFFFFF',tint:'#F3F4F6',icon:'🚗',crane:false};}
+function vehChip(id){var v=veh(id);return '<span class="veh-chip" style="background:'+v.color+';color:'+v.text+'">'+v.icon+' '+esc(v.name)+'</span>';}
+function badge(s){var m={pending:'⏳ Pending',approved:'✅ Approved',declined:'❌ Declined'};return '<span class="badge '+esc(s)+'">'+(m[s]||esc(s))+'</span>';}
+function findBooking(key){for(var i=0;i<allBookings.length;i++){if(allBookings[i]._key===key)return allBookings[i];}return null;}
+function byTime(a,b){return (a.time||'').localeCompare(b.time||'')||a.id-b.id;}
+function showToast(msg,bg){var t=$('toast');t.textContent=msg;t.style.background=bg||'#16A34A';t.classList.add('show');clearTimeout(showToast._t);showToast._t=setTimeout(function(){t.classList.remove('show');},3200);}
+function radioVal(name){var el=document.querySelector('input[name="'+name+'"]:checked');return el?el.value:'';}
+function fail(e){alert('Something went wrong: '+(e&&e.message?e.message:e));}
+function updateBooking(key,updates){return bookingsRef.child(key).update(updates);}
+
+/* Overlap with an existing booking for the SAME vehicle on the same day */
+function findOverlap(vehicleId,date,start,end,excludeKey,status){
+  for(var i=0;i<allBookings.length;i++){
+    var b=allBookings[i];
+    if(b.status!==status||b.vehicle!==vehicleId||b.date!==date)continue;
+    if(excludeKey&&b._key===excludeKey)continue;
+    if(!b.endtime||!b.time)continue;
+    if(start<b.endtime&&b.time<end)return b;
+  }
+  return null;
+}
+function checkClash(vehicleId,date,start,end,excludeKey){return findOverlap(vehicleId,date,start,end,excludeKey,'approved');}
+
+/* ---------- database ---------- */
+function showDbError(msg){var l=$('loading');l.classList.add('error');l.style.display='flex';$('loading-msg').innerHTML=msg;}
+function startDatabase(){
+  try{
+    if(typeof firebase==='undefined')throw new Error('no-sdk');
+    firebase.initializeApp(firebaseConfig);
+    bookingsRef=firebase.database().ref(DB_PATH);
+  }catch(e){
+    showDbError('⚠️ Could not load the booking database.<br>Please check your internet connection and refresh the page.');
+    return;
+  }
+  setTimeout(function(){if(!dataLoaded&&!$('loading').classList.contains('error'))$('loading-msg').textContent='Still connecting… please check your internet connection.';},12000);
+  bookingsRef.on('value',function(snapshot){
+    dataLoaded=true;
+    var list=[];
+    snapshot.forEach(function(child){var b=child.val()||{};b._key=child.key;list.push(b);});
+    list.sort(function(a,b){return b.id-a.id;});
+    allBookings=list;
+    $('loading').style.display='none';
+    requestRender();
+  },function(err){
+    var denied=err&&/permission/i.test(err.code+' '+err.message);
+    showDbError(denied
+      ?'⚠️ The database refused access to vehicle bookings (permission denied).<br>The Firebase database rules need to allow the <strong>'+DB_PATH+'</strong> section.'
+      :'⚠️ Could not connect to the booking database: '+esc(err&&err.message?err.message:err));
+  });
+}
+
+/* Re-render without wiping something a person is busy typing */
+var renderPending=false;
+function isTypingInList(){var a=document.activeElement;return a&&(a.tagName==='INPUT'||a.tagName==='SELECT'||a.tagName==='TEXTAREA')&&(a.closest('#admin-list')||a.closest('#booking-list'));}
+function requestRender(){if(isTypingInList()){renderPending=true;return;}renderAll();}
+document.addEventListener('focusout',function(){if(renderPending){setTimeout(function(){if(renderPending&&!isTypingInList()){renderPending=false;renderAll();}},350);}});
+function renderAll(){
+  renderList();
+  if($('view-calendar').classList.contains('active'))renderCalendar();
+  if(adminUnlocked)renderAdmin();
+  updateFormHints();
+}
+
+/* ---------- navigation ---------- */
+function switchView(v){
+  ['form','calendar','list','admin'].forEach(function(n){
+    $('view-'+n).classList.toggle('active',v===n);
+    $('tab-'+n).classList.toggle('active',v===n);
+  });
+  if(v==='calendar')renderCalendar();
+  if(v==='admin')renderAdminView();
+  window.scrollTo(0,0);
+}
+
+/* ---------- build vehicle UI from the VEHICLES list ---------- */
+function buildVehicleUI(){
+  var html='';
+  VEHICLES.forEach(function(v){
+    html+='<label class="veh-opt" style="--vc:'+v.color+';--vt:'+v.tint+';--vx:'+v.text+'"><input type="radio" name="vehicle" value="'+esc(v.id)+'"><span class="veh-swatch"></span><span class="veh-icon" aria-hidden="true">'+v.icon+'</span><span class="veh-name">'+esc(v.name)+'</span><span class="veh-colour">'+esc(v.colourName)+'</span></label>';
+  });
+  $('veh-options').innerHTML=html;
+  $('veh-options').style.gridTemplateColumns='repeat('+Math.min(VEHICLES.length,3)+',1fr)';
+
+  var opts='<option value="">All Vehicles</option>';
+  VEHICLES.forEach(function(v){opts+='<option value="'+esc(v.id)+'">'+v.icon+' '+esc(v.name)+'</option>';});
+  $('f-vehicle').innerHTML=opts;$('adm-vehicle').innerHTML=opts;
+
+  var eopts='';
+  VEHICLES.forEach(function(v){eopts+='<option value="'+esc(v.id)+'">'+v.icon+' '+esc(v.name)+'</option>';});
+  $('e-vehicle').innerHTML=eopts;
+
+  var legend='<span class="h">Vehicle:</span>';
+  VEHICLES.forEach(function(v){legend+='<div class="leg-item"><div class="leg-swatch" style="background:'+v.color+'"></div>'+esc(v.name)+'</div>';});
+  legend+='<span class="h" style="margin-left:6px">Status:</span>'
+    +'<div class="leg-item"><div class="leg-swatch" style="background:#64748B"></div>Approved</div>'
+    +'<div class="leg-item"><div class="leg-swatch" style="background:#F1F5F9;border:1.5px dashed #64748B"></div>Pending</div>'
+    +'<div class="leg-item"><div class="leg-swatch" style="background:#F3F4F6;border:1px solid #E5E7EB"></div><s style="color:#9CA3AF">Declined</s></div>';
+  $('cal-legend').innerHTML=legend;
+  buildCalFilter();
+}
+function buildCalFilter(){
+  var html='<span class="lbl">Show:</span><button class="fchip'+(calVehFilter===''?' active':'')+'" data-act="cal-filter" data-veh="">All</button>';
+  VEHICLES.forEach(function(v){html+='<button class="fchip'+(calVehFilter===v.id?' active':'')+'" data-act="cal-filter" data-veh="'+esc(v.id)+'"><span class="dot" style="background:'+v.color+'"></span>'+esc(v.name)+'</button>';});
+  $('cal-filter').innerHTML=html;
+}
+
+/* ---------- new booking form ---------- */
+function syncChecked(){
+  document.querySelectorAll('.veh-opt').forEach(function(l){l.classList.toggle('checked',l.querySelector('input').checked);});
+  document.querySelectorAll('#load-options label').forEach(function(l){l.classList.toggle('checked',l.querySelector('input[type=radio]').checked);});
+  $('load-other-text').classList.toggle('visible',radioVal('loadtype')==='Other');
+}
+function updateFormHints(){
+  var vid=radioVal('vehicle'),date=$('f-date').value,t=$('f-time').value,et=$('f-endtime').value;
+  var sched=$('day-sched');
+  if(!date){sched.style.display='none';}
+  else{
+    var bks=allBookings.filter(function(b){return b.date===date&&b.status!=='declined';}).sort(byTime);
+    var html='<h4>Already booked on '+fmtDate(date)+'</h4>';
+    if(!bks.length)html+='<div class="sched-empty">Nothing booked yet – all vehicles are free.</div>';
+    bks.forEach(function(b){html+='<div class="sched-row">'+vehChip(b.vehicle)+'<strong>'+fmtTime(b.time)+' – '+fmtTime(b.endtime)+'</strong><span>'+esc(b.site)+'</span>'+badge(b.status)+'</div>';});
+    sched.innerHTML=html;sched.style.display='block';
+  }
+  var al=$('clash-alert');al.style.display='none';al.classList.remove('block');
+  if(vid&&date&&t&&et&&et>t){
+    var v=veh(vid);
+    var c=checkClash(vid,date,t,et,null);
+    if(c){al.classList.add('block');al.style.display='block';al.textContent='⚠️ Time clash! The '+v.name+' is already approved for '+c.site+', '+fmtTime(c.time)+' – '+fmtTime(c.endtime)+'. Please choose another time or vehicle.';}
+    else{var p=findOverlap(vid,date,t,et,null,'pending');
+      if(p){al.style.display='block';al.textContent='Heads up: there is already a pending request for the '+v.name+' at that time ('+p.site+', '+fmtTime(p.time)+' – '+fmtTime(p.endtime)+'). The approver will decide.';}}
+  }
+}
+function setFormError(msg,invalidIds){
+  document.querySelectorAll('#view-form .invalid').forEach(function(el){el.classList.remove('invalid');});
+  (invalidIds||[]).forEach(function(id){var el=$(id);if(el)el.classList.add('invalid');});
+  var box=$('form-error');
+  if(msg){box.innerHTML=msg;box.classList.add('visible');box.scrollIntoView({behavior:'smooth',block:'center'});}
+  else{box.classList.remove('visible');box.innerHTML='';}
+}
+function submitForm(){
+  if(!bookingsRef){alert('The booking database is not connected. Please refresh the page.');return;}
+  var f={name:$('f-name').value.trim(),vehicle:radioVal('vehicle'),site:$('f-site').value.trim(),from:$('f-from').value.trim(),to:$('f-to').value.trim(),date:$('f-date').value,time:$('f-time').value,endtime:$('f-endtime').value,load:radioVal('loadtype'),notes:$('f-notes').value.trim()};
+  var errs=[],bad=[];
+  function need(ok,label,id){if(!ok){errs.push(label);bad.push(id);}}
+  need(f.name,'Your Name','f-name');need(f.vehicle,'Vehicle','veh-options');need(f.site,'Site Name / Location','f-site');
+  need(f.from,'From','f-from');need(f.to,'To','f-to');need(f.date,'Requested Date','f-date');
+  need(f.time,'Start Time','f-time');need(f.endtime,'End Time','f-endtime');need(f.load,'Load Type','load-options');
+  if(errs.length){setFormError('<strong>Please complete:</strong> '+errs.map(esc).join(', '),bad);return;}
+  if(f.endtime<=f.time){setFormError('End Time must be after Start Time.',['f-endtime']);return;}
+  var clash=checkClash(f.vehicle,f.date,f.time,f.endtime,null);
+  if(clash){setFormError('⚠️ <strong>Booking clash.</strong> The '+esc(veh(f.vehicle).name)+' is already approved for '+esc(clash.site)+' on '+fmtDate(clash.date)+' from '+fmtTime(clash.time)+' to '+fmtTime(clash.endtime)+'. Please choose a different time or vehicle.',['f-time','f-endtime']);return;}
+  setFormError('');
+  var loadType=f.load;
+  if(loadType==='Other'){var ot=$('load-other-text').value.trim();loadType=ot?'Other: '+ot:'Other';}
+  var booking={id:Date.now(),vehicle:f.vehicle,name:f.name,site:f.site,from:f.from,to:f.to,date:f.date,time:f.time,endtime:f.endtime,loadType:loadType,notes:f.notes,status:'pending',reason:'',approvedAt:'',completedAt:'',truckStart:'',truckEnd:'',craneStart:'',craneEnd:'',odoSavedAt:'',submitted:new Date().toISOString()};
+  var btn=$('btn-submit');btn.disabled=true;
+  bookingsRef.push(booking).then(function(){btn.disabled=false;showToast('✓ '+veh(f.vehicle).name+' booking submitted! Awaiting approval.','#1B4FA8');clearForm();})
+    .catch(function(e){btn.disabled=false;fail(e);});
+}
+function clearForm(){
+  ['f-name','f-site','f-from','f-to','f-date','f-time','f-endtime','f-notes','load-other-text'].forEach(function(id){$(id).value='';});
+  document.querySelectorAll('input[name="loadtype"],input[name="vehicle"]').forEach(function(r){r.checked=false;});
+  syncChecked();setFormError('');updateFormHints();
+}
+
+/* ---------- readings (odometer + crane hours) ---------- */
+/* Readings boxes appear in both Submissions and Approvals, so inputs are
+   found relative to the box that was clicked (data-f), not by id. */
+function readingsInputs(b,crane){
+  function inp(f,label,val,ph){return '<div class="odo-field"><label>'+label+'<input type="number" data-f="'+f+'" value="'+esc(val||'')+'" placeholder="'+ph+'" step="0.1" min="0" inputmode="decimal"></label></div>';}
+  var h='<div class="odo-grid">'+inp('ts','Odometer Start (km)',b&&b.truckStart,'e.g. 45230')+inp('te','Odometer End (km)',b&&b.truckEnd,'e.g. 45310');
+  if(crane)h+=inp('cs','Crane Start (hrs)',b&&b.craneStart,'e.g. 120.5')+inp('ce','Crane End (hrs)',b&&b.craneEnd,'e.g. 118.0');
+  h+='</div>';
+  if(crane)h+='<div class="odo-hint">Crane hours count down to the next service.</div>';
+  return h;
+}
+function readingsDisplay(b,admin){
+  var v=veh(b.vehicle),k=b._key;
+  function kv(label,val,style){return '<div class="odo-row"><span class="odo-label">'+label+'</span><span class="odo-val"'+(style?' style="'+style+'"':'')+'>'+val+'</span></div>';}
+  var h='<div class="odo-readings-display"><div class="odo-head"><span>'+(v.crane?'Odometer / Crane Hours':'Odometer Readings')+'</span>'+(admin?'<button class="btn-mini" data-act="odo-edit" data-key="'+k+'">✏️ Edit</button>':'')+'</div><div class="odo-kv">';
+  h+=kv('Odometer Start',esc(b.truckStart||'—')+' km')+kv('Odometer End',esc(b.truckEnd||'—')+' km');
+  var ts=num(b.truckStart),te=num(b.truckEnd);
+  if(ts!==null&&te!==null)h+=kv('Distance',(te-ts).toFixed(1)+' km')+'<div></div>';
+  if(v.crane||b.craneStart||b.craneEnd){
+    h+=kv('Crane Start',esc(b.craneStart||'—')+' hrs')+kv('Crane End',esc(b.craneEnd||'—')+' hrs');
+    var cs=num(b.craneStart),ce=num(b.craneEnd);
+    if(cs!==null&&ce!==null){
+      var col=ce<=0?'#DC2626':ce<=50?'#D97706':'#0F766E';
+      var msg=ce<=0?'🔴 SERVICE DUE!':ce<=50?'⚠️ Service due soon':'✅ OK';
+      h+=kv('Crane Hours Used',(cs-ce).toFixed(1)+' hrs')+kv('Remaining to Service',ce.toFixed(1)+' hrs — '+msg,'color:'+col);
+    }
+  }
+  h+='</div>';
+  if(admin){
+    h+='<div class="odo-edit-box" style="display:'+(odoEditOpen[k]?'block':'none')+';margin-top:10px;background:#fff;border:1.5px solid #BBF7D0;border-radius:8px;padding:12px">'+readingsInputs(b,v.crane)
+      +'<div style="display:flex;gap:8px"><button class="btn-complete" data-act="odo-save-edit" data-key="'+k+'">Save</button><button class="btn-reset" data-act="odo-cancel" data-key="'+k+'">Cancel</button></div></div>';
+  }
+  return h+'</div>';
+}
+function readingsEntry(b){
+  var v=veh(b.vehicle),k=b._key,open=!!odoUnlocked[k];
+  var h='<div class="odo-unlock"><div style="font-size:12px;font-weight:600;color:var(--muted);margin-bottom:6px">Enter '+(v.crane?'Odometer / Crane Hour':'Odometer')+' Readings</div>';
+  if(!open)h+='<div class="odo-unlock-row"><input type="password" class="odo-pin-input" maxlength="6" placeholder="PIN" inputmode="numeric" aria-label="Driver PIN" data-enter="odo-unlock" data-key="'+k+'"><button class="btn-odo-unlock" data-act="odo-unlock" data-key="'+k+'">Unlock</button><span style="font-size:11px;color:var(--muted)">(Driver PIN required)</span></div>';
+  h+='<div class="odo-fields'+(open?' visible':'')+'">'+readingsInputs(null,v.crane)+'<button class="btn-complete" data-act="odo-save" data-key="'+k+'" style="width:100%">Save Readings</button></div></div>';
+  return h;
+}
+function collectReadings(scope,requireOne){
+  function g(f){var el=scope?scope.querySelector('[data-f="'+f+'"]'):null;return el?el.value.trim():'';}
+  var r={truckStart:g('ts'),truckEnd:g('te'),craneStart:g('cs'),craneEnd:g('ce')};
+  if(requireOne&&!r.truckStart&&!r.truckEnd&&!r.craneStart&&!r.craneEnd){alert('Please enter at least one reading.');return null;}
+  if(r.truckStart&&r.truckEnd&&parseFloat(r.truckEnd)<parseFloat(r.truckStart)){alert('Odometer End cannot be less than Start.');return null;}
+  if(r.craneStart&&r.craneEnd&&parseFloat(r.craneEnd)>parseFloat(r.craneStart)){alert('Crane End cannot be more than Start (hours count down to service).');return null;}
+  r.odoSavedAt=new Date().toISOString();
+  return r;
+}
+
+/* ---------- submissions list ---------- */
+function listFiltered(){
+  var search=$('f-search').value.toLowerCase(),sf=$('f-status').value,vf=$('f-vehicle').value;
+  var out=allBookings.filter(function(b){
+    if(sf&&b.status!==sf)return false;
+    if(vf&&b.vehicle!==vf)return false;
+    if(search&&String(b.site||'').toLowerCase().indexOf(search)<0&&String(b.name||'').toLowerCase().indexOf(search)<0)return false;
+    return true;
+  });
+  out.sort(function(a,b){return String(b.date).localeCompare(String(a.date))||b.id-a.id;});
+  return out;
+}
+function renderList(){
+  var td=todayStr();
+  $('st-total').textContent=allBookings.length;
+  $('st-pending').textContent=allBookings.filter(function(b){return b.status==='pending';}).length;
+  $('st-approved').textContent=allBookings.filter(function(b){return b.status==='approved';}).length;
+  $('st-declined').textContent=allBookings.filter(function(b){return b.status==='declined';}).length;
+  $('st-upcoming').textContent=allBookings.filter(function(b){return b.date>=td&&b.status==='approved';}).length;
+  var rows=listFiltered();
+  $('export-bar').style.display=rows.length?'flex':'none';
+  var el=$('booking-list');
+  if(!rows.length){el.innerHTML='<div class="empty-state"><div class="icon">📋</div><p>'+(allBookings.length?'No bookings match your filters.':'No bookings yet. Submit the first one!')+'</p></div>';return;}
+  var html='';
+  rows.forEach(function(b){
+    var k=b._key,v=veh(b.vehicle);
+    html+='<div class="booking-card status-'+esc(b.status)+'" style="border-left-color:'+v.color+'">';
+    html+='<div class="bc-header"><div class="bc-site">'+esc(b.site)+'</div><div class="bc-date">📅 '+fmtDate(b.date)+'</div></div>';
+    if(b.from||b.to)html+='<div class="bc-route">🚚 <strong>From:</strong> '+esc(b.from||'—')+' → <strong>To:</strong> '+esc(b.to||'—')+'</div>';
+    html+='<div class="bc-meta">'+vehChip(b.vehicle)+'<span class="tag time">🕐 '+fmtTime(b.time)+' – '+fmtTime(b.endtime)+'</span><span class="tag load">📦 '+esc(b.loadType)+'</span>'+badge(b.status)+'</div>';
+    if(b.notes)html+='<div class="bc-notes">"'+esc(b.notes)+'"</div>';
+    if(b.status==='declined'&&b.reason)html+='<div class="bc-reason">❌ Reason: '+esc(b.reason)+'</div>';
+    html+='<div class="bc-submitter">Submitted by '+esc(b.name)+' · '+fmtStamp(b.submitted)+'</div>';
+    if(b.status==='pending')html+='<div style="margin-top:10px"><button class="btn-ghost" style="padding:7px 16px;font-size:13px" data-act="edit" data-key="'+k+'">Edit Booking</button></div>';
+    if(b.status==='approved'){
+      if(b.completedAt)html+='<div style="margin-top:10px"><span class="completed-stamp">🏁 Completed · '+fmtStamp(b.completedAt)+'</span></div>';
+      else html+='<div style="margin-top:10px"><button class="btn-complete" data-act="complete" data-key="'+k+'">🏁 Mark as Complete</button></div>';
+      html+=b.odoSavedAt?readingsDisplay(b,false):readingsEntry(b);
+    }
+    html+='</div>';
+  });
+  el.innerHTML=html;
+}
+
+/* ---------- exports ---------- */
+var EXPORT_HEADERS=['Submitted','Vehicle','Date','Start Time','End Time','Site','From','To','Load Type','Notes','Status','Decline Reason','Completed At','Odometer Start (km)','Odometer End (km)','Distance (km)','Crane Start (hrs)','Crane End (hrs)','Crane Hours Used','Submitted By'];
+function exportRow(b){
+  var ts=num(b.truckStart),te=num(b.truckEnd),cs=num(b.craneStart),ce=num(b.craneEnd);
+  return [fmtStamp(b.submitted),veh(b.vehicle).name,fmtDate(b.date),fmtTime(b.time),fmtTime(b.endtime),b.site||'',b.from||'',b.to||'',b.loadType||'',b.notes||'',b.status||'',b.reason||'',fmtStamp(b.completedAt),b.truckStart||'',b.truckEnd||'',ts!==null&&te!==null?(te-ts).toFixed(1):'',b.craneStart||'',b.craneEnd||'',cs!==null&&ce!==null?(cs-ce).toFixed(1):'',b.name||''];
+}
+function download(content,type,filename){
+  var blob=new Blob([content],{type:type});var url=URL.createObjectURL(blob);
+  var a=document.createElement('a');a.href=url;a.download=filename;document.body.appendChild(a);a.click();a.remove();
+  setTimeout(function(){URL.revokeObjectURL(url);},1000);
+}
+function exportCSV(){
+  var rows=listFiltered();if(!rows.length){alert('No bookings to export.');return;}
+  var lines=[EXPORT_HEADERS.join(',')];
+  rows.forEach(function(b){lines.push(exportRow(b).map(function(v){return '"'+String(v).replace(/"/g,'""')+'"';}).join(','));});
+  download('﻿'+lines.join('\r\n'),'text/csv;charset=utf-8','Tyris_Vehicle_Bookings_'+todayStr()+'.csv');
+}
+function exportExcel(){
+  var rows=listFiltered();if(!rows.length){alert('No bookings to export.');return;}
+  function x(v){return String(v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+  function cell(v,style){return '<Cell ss:StyleID="'+style+'"><Data ss:Type="String">'+x(v)+'</Data></Cell>';}
+  var xmlRows='<Row>'+EXPORT_HEADERS.map(function(h){return cell(h,'h');}).join('')+'</Row>\n';
+  rows.forEach(function(b){xmlRows+='<Row>'+exportRow(b).map(function(v){return cell(v,'d');}).join('')+'</Row>\n';});
+  var xml='<?xml version="1.0" encoding="UTF-8"?><?mso-application progid="Excel.Sheet"?><Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet" xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet"><Styles><Style ss:ID="h"><Font ss:Bold="1" ss:Color="#FFFFFF"/><Interior ss:Color="#1B3F8B" ss:Pattern="Solid"/></Style><Style ss:ID="d"/></Styles><Worksheet ss:Name="Vehicle Bookings"><Table>'+xmlRows+'</Table></Worksheet></Workbook>';
+  download(xml,'application/vnd.ms-excel','Tyris_Vehicle_Bookings_'+todayStr()+'.xls');
+}
+
+/* ---------- approvals ---------- */
+function checkPin(){
+  if($('pin-input').value===ADMIN_PIN){adminUnlocked=true;$('admin-login').style.display='none';$('admin-panel').style.display='block';$('pin-input').value='';renderAdmin();}
+  else{$('pin-error').textContent='Incorrect PIN. Please try again.';$('pin-input').value='';}
+}
+function adminLogout(){adminUnlocked=false;$('admin-panel').style.display='none';$('admin-login').style.display='block';$('pin-input').value='';}
+function renderAdminView(){if(!adminUnlocked){$('admin-panel').style.display='none';$('admin-login').style.display='block';}else renderAdmin();}
+function renderAdmin(){
+  var search=$('adm-search').value.toLowerCase(),sf=$('adm-status').value,vf=$('adm-vehicle').value;
+  $('adm-pend').textContent=allBookings.filter(function(b){return b.status==='pending';}).length;
+  $('adm-appr').textContent=allBookings.filter(function(b){return b.status==='approved';}).length;
+  $('adm-decl').textContent=allBookings.filter(function(b){return b.status==='declined';}).length;
+  var rows=allBookings.filter(function(b){
+    if(sf&&b.status!==sf)return false;
+    if(vf&&b.vehicle!==vf)return false;
+    if(search&&String(b.site||'').toLowerCase().indexOf(search)<0&&String(b.name||'').toLowerCase().indexOf(search)<0)return false;
+    return true;
+  });
+  rows.sort(function(a,b){return String(a.date).localeCompare(String(b.date))||byTime(a,b);});
+  var el=$('admin-list');
+  if(!rows.length){el.innerHTML='<div class="empty-state"><div class="icon">'+(sf==='pending'?'🎉':'📋')+'</div><p>'+(sf==='pending'?'No pending bookings — all clear!':'No bookings match your filter.')+'</p></div>';return;}
+  var html='';
+  rows.forEach(function(b){
+    var k=b._key,v=veh(b.vehicle),isPending=b.status==='pending';
+    html+='<div class="admin-card '+esc(b.status)+'" style="border-left-color:'+v.color+'">';
+    html+='<div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px"><div class="ac-site">'+esc(b.site)+'</div><div style="font-size:13px;color:var(--muted)">📅 '+fmtDate(b.date)+'</div></div>';
+    html+='<div class="ac-meta">'+vehChip(b.vehicle)+'<span>🕐 '+fmtTime(b.time)+' – '+fmtTime(b.endtime)+'</span></div>';
+    if(b.from||b.to)html+='<div class="ac-meta"><span>🚚 <strong>From:</strong> '+esc(b.from||'—')+' → <strong>To:</strong> '+esc(b.to||'—')+'</span></div>';
+    html+='<div class="ac-meta"><span>📦 '+esc(b.loadType)+'</span>'+badge(b.status)+'</div>';
+    if(isPending){var c=checkClash(b.vehicle,b.date,b.time,b.endtime,k);if(c)html+='<div class="clash-warning block" style="display:block;margin:8px 0 0">⚠️ Clashes with an approved '+esc(v.name)+' booking: '+esc(c.site)+', '+fmtTime(c.time)+' – '+fmtTime(c.endtime)+'</div>';}
+    if(b.notes)html+='<div class="ac-notes">"'+esc(b.notes)+'"</div>';
+    if(b.status==='declined'&&b.reason)html+='<div class="ac-notes" style="color:#991B1B">Reason: '+esc(b.reason)+'</div>';
+    if(b.completedAt)html+='<div style="margin-top:6px"><span class="completed-stamp">🏁 Completed · '+fmtStamp(b.completedAt)+'</span></div>';
+    html+='<div class="ac-by">Submitted by '+esc(b.name)+' · '+fmtStamp(b.submitted)+'</div>';
+    html+='<div class="status-change-row"><label for="status-sel-'+k+'">Change status:</label><select class="status-select" id="status-sel-'+k+'">'
+      +['pending','approved','declined'].map(function(s){return '<option value="'+s+'"'+(b.status===s?' selected':'')+'>'+s.charAt(0).toUpperCase()+s.slice(1)+'</option>';}).join('')
+      +'</select><button class="btn-status-save" data-act="status-apply" data-key="'+k+'">Apply</button></div>';
+    html+='<div class="approve-actions">';
+    if(isPending)html+='<button class="btn-approve" data-act="approve" data-key="'+k+'">✅ Approve</button><button class="btn-decline" data-act="decline-toggle" data-key="'+k+'">❌ Decline</button>';
+    else html+='<button class="btn-reset" data-act="reset" data-key="'+k+'">↩ Reset</button>';
+    html+='<button class="btn-reset" data-act="admin-edit" data-key="'+k+'">✏️ Edit</button>';
+    html+='<button class="btn-reset" style="margin-left:auto;color:#DC2626" data-act="delete" data-key="'+k+'">🗑 Delete</button></div>';
+    if(isPending)html+='<div class="reason-wrap'+(declineOpen[k]?' visible':'')+'" id="reason-wrap-'+k+'"><input type="text" class="reason-input" id="reason-'+k+'" placeholder="Optional: reason for declining…"><button class="btn-decline" style="width:100%;margin-top:8px" data-act="decline-confirm" data-key="'+k+'">Confirm Decline</button></div>';
+    if(b.status==='approved')html+=b.odoSavedAt?readingsDisplay(b,true):readingsEntry(b);
+    html+='</div>';
+  });
+  el.innerHTML=html;
+}
+function approveBooking(key){
+  var b=findBooking(key);if(!b)return;
+  var c=checkClash(b.vehicle,b.date,b.time,b.endtime,key);
+  if(c&&!confirm('⚠️ Clash detected!\n\nThe '+veh(b.vehicle).name+' is already approved for:\n• '+c.site+' from '+fmtTime(c.time)+' to '+fmtTime(c.endtime)+'\n\nApprove anyway?'))return;
+  updateBooking(key,{status:'approved',reason:'',approvedAt:new Date().toISOString()}).then(function(){showToast('✅ Booking approved!','#16A34A');}).catch(fail);
+}
+function declineBooking(key){
+  var inp=$('reason-'+key);var reason=inp?inp.value.trim():'';
+  delete declineOpen[key];
+  updateBooking(key,{status:'declined',reason:reason,approvedAt:new Date().toISOString()}).then(function(){showToast('❌ Booking declined.','#DC2626');}).catch(fail);
+}
+function changeStatus(key,s){
+  var b=findBooking(key);if(!b)return;
+  if(s===b.status){showToast('Status is already '+s+'.','#6B7280');return;}
+  if(s==='approved'){var c=checkClash(b.vehicle,b.date,b.time,b.endtime,key);if(c&&!confirm('⚠️ The '+veh(b.vehicle).name+' is already approved for '+c.site+' from '+fmtTime(c.time)+' to '+fmtTime(c.endtime)+'.\n\nApprove anyway?'))return;}
+  var u={status:s,approvedAt:s==='pending'?'':new Date().toISOString()};if(s!=='declined')u.reason='';
+  updateBooking(key,u).then(function(){showToast('Status changed to '+s.charAt(0).toUpperCase()+s.slice(1)+'!',s==='approved'?'#16A34A':s==='declined'?'#DC2626':'#D97706');}).catch(fail);
+}
+
+/* ---------- edit modal ---------- */
+var editIsAdmin=false,editCurrentKey=null;
+function openEditModal(key,asAdmin){
+  var b=findBooking(key);if(!b)return;
+  editIsAdmin=!!asAdmin;editCurrentKey=key;
+  $('edit-modal-title').textContent=asAdmin?'Edit Booking (Approver)':'Edit Booking';
+  $('edit-modal-desc').textContent=asAdmin?'Changes are saved straight away. The status stays the same.':'Confirm your name to edit this pending booking.';
+  $('edit-verify-name').value='';$('edit-verify-error').textContent='';$('edit-error').classList.remove('visible');
+  if(asAdmin){$('edit-name-verify').style.display='none';populateEditForm(b);$('edit-form-fields').style.display='block';}
+  else{$('edit-name-verify').style.display='block';$('edit-form-fields').style.display='none';}
+  $('edit-modal').classList.remove('hidden');
+  setTimeout(function(){var f=asAdmin?$('e-vehicle'):$('edit-verify-name');if(f)f.focus();},50);
+}
+function verifyAndShowEdit(){
+  var b=findBooking(editCurrentKey);if(!b)return;
+  if($('edit-verify-name').value.trim().toLowerCase()!==String(b.name||'').trim().toLowerCase()){$('edit-verify-error').textContent='Name does not match.';return;}
+  $('edit-name-verify').style.display='none';populateEditForm(b);$('edit-form-fields').style.display='block';
+  $('edit-modal-desc').textContent='Update the details below and save.';
+}
+function populateEditForm(b){
+  $('e-vehicle').value=veh(b.vehicle).id===b.vehicle?b.vehicle:VEHICLES[0].id;
+  $('e-site').value=b.site||'';$('e-from').value=b.from||'';$('e-to').value=b.to||'';
+  $('e-date').value=b.date||'';$('e-time').value=b.time||'';$('e-endtime').value=b.endtime||'';$('e-notes').value=b.notes||'';
+  var lt=b.loadType||'',known=['Container','Plant / Machinery','Materials'];
+  if(known.indexOf(lt)>=0){$('e-loadtype').value=lt;$('e-other-wrap').style.display='none';$('e-other-text').value='';}
+  else{$('e-loadtype').value='Other';$('e-other-wrap').style.display='block';$('e-other-text').value=lt.replace(/^Other:?\s*/,'');}
+}
+function saveEdit(){
+  var u={vehicle:$('e-vehicle').value,site:$('e-site').value.trim(),from:$('e-from').value.trim(),to:$('e-to').value.trim(),date:$('e-date').value,time:$('e-time').value,endtime:$('e-endtime').value,notes:$('e-notes').value.trim()};
+  var errs=[];
+  if(!u.site)errs.push('Site Name');if(!u.from)errs.push('From');if(!u.to)errs.push('To');if(!u.date)errs.push('Date');if(!u.time)errs.push('Start Time');if(!u.endtime)errs.push('End Time');
+  var box=$('edit-error');
+  function err(m){box.innerHTML=m;box.classList.add('visible');}
+  if(errs.length){err('<strong>Please complete:</strong> '+errs.join(', '));return;}
+  if(u.endtime<=u.time){err('End Time must be after Start Time.');return;}
+  var c=checkClash(u.vehicle,u.date,u.time,u.endtime,editCurrentKey);
+  if(c){err('⚠️ Clash: the '+esc(veh(u.vehicle).name)+' is already approved for '+esc(c.site)+', '+fmtTime(c.time)+' – '+fmtTime(c.endtime)+'.');return;}
+  var lt=$('e-loadtype').value;
+  if(lt==='Other'){var ot=$('e-other-text').value.trim();lt=ot?'Other: '+ot:'Other';}
+  u.loadType=lt;
+  updateBooking(editCurrentKey,u).then(function(){showToast('Booking updated!','#1B4FA8');closeEditModal();}).catch(fail);
+}
+function closeEditModal(){$('edit-modal').classList.add('hidden');editCurrentKey=null;}
+
+/* ---------- calendar ---------- */
+var calYear=new Date().getFullYear(),calMonth=new Date().getMonth();
+var MONTHS=['January','February','March','April','May','June','July','August','September','October','November','December'];
+function calPrev(){calMonth--;if(calMonth<0){calMonth=11;calYear--;}calSelected='';renderCalendar();}
+function calNext(){calMonth++;if(calMonth>11){calMonth=0;calYear++;}calSelected='';renderCalendar();}
+function calBookings(){return allBookings.filter(function(b){return !calVehFilter||b.vehicle===calVehFilter;});}
+function pillHtml(b){
+  var v=veh(b.vehicle),style;
+  if(b.status==='approved')style='background:'+v.color+';color:'+v.text+';border-color:'+v.color;
+  else if(b.status==='pending')style='background:'+v.tint+';color:#1A1A2E;border:1px dashed '+v.color;
+  else style='background:#F3F4F6;color:#9CA3AF;border-color:#E5E7EB;text-decoration:line-through';
+  var tip=v.name+' · '+fmtTime(b.time)+' – '+fmtTime(b.endtime)+' · '+(b.site||'')+' ('+b.status+')';
+  return '<div class="day-pill" style="'+style+'" title="'+esc(tip)+'"><span class="pill-time">'+esc(b.time||'')+'</span> <span class="pill-site">'+esc(b.site||'')+'</span></div>';
+}
+function renderCalendar(){
+  $('cal-title').textContent=MONTHS[calMonth]+' '+calYear;
+  var td=todayStr(),firstDay=new Date(calYear,calMonth,1).getDay(),daysInMonth=new Date(calYear,calMonth+1,0).getDate(),daysInPrev=new Date(calYear,calMonth,0).getDate();
+  var byDate={};
+  calBookings().forEach(function(b){(byDate[b.date]=byDate[b.date]||[]).push(b);});
+  var html='',dayCount=1,nextCount=1,totalCells=Math.ceil((firstDay+daysInMonth)/7)*7;
+  for(var c=0;c<totalCells;c++){
+    var dateStr,cls='cal-day',label;
+    if(c<firstDay){label=daysInPrev-firstDay+c+1;var pm=calMonth===0?12:calMonth,py=calMonth===0?calYear-1:calYear;dateStr=py+'-'+pad(pm)+'-'+pad(label);cls+=' other-month';}
+    else if(dayCount>daysInMonth){label=nextCount++;var nm=calMonth===11?1:calMonth+2,ny=calMonth===11?calYear+1:calYear;dateStr=ny+'-'+pad(nm)+'-'+pad(label);cls+=' other-month';}
+    else{label=dayCount++;dateStr=calYear+'-'+pad(calMonth+1)+'-'+pad(label);if(dateStr===td)cls+=' today';}
+    var bks=(byDate[dateStr]||[]).slice().sort(function(a,b){var o={approved:0,pending:1,declined:2};return (o[a.status]-o[b.status])||byTime(a,b);});
+    if(bks.length)cls+=' has-booking';
+    if(dateStr===calSelected)cls+=' selected';
+    var pills='';
+    for(var p=0;p<Math.min(bks.length,3);p++)pills+=pillHtml(bks[p]);
+    if(bks.length>3)pills+='<div class="day-more">+'+(bks.length-3)+' more</div>';
+    html+='<div class="'+cls+'"'+(bks.length?' data-act="day" data-date="'+dateStr+'" role="button" tabindex="0" aria-label="'+bks.length+' booking(s) on '+fmtDate(dateStr)+'"':'')+'><div class="day-num">'+label+'</div><div class="day-bookings">'+pills+'</div></div>';
+  }
+  $('cal-days').innerHTML=html;
+  if(calSelected)showDay(calSelected,true);else $('day-detail').classList.remove('visible');
+}
+function showDay(dateStr,quiet){
+  var bks=calBookings().filter(function(b){return b.date===dateStr;}).sort(byTime);
+  if(!bks.length){$('day-detail').classList.remove('visible');return;}
+  calSelected=dateStr;
+  document.querySelectorAll('.cal-day.selected').forEach(function(d){d.classList.remove('selected');});
+  var cell=document.querySelector('.cal-day[data-date="'+dateStr+'"]');if(cell)cell.classList.add('selected');
+  $('day-detail-title').textContent='Bookings for '+fmtDate(dateStr)+' ('+bks.length+')';
+  var html='';
+  bks.forEach(function(b){
+    var v=veh(b.vehicle);
+    html+='<div class="detail-item" style="border-left-color:'+v.color+'"><div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">'+vehChip(b.vehicle)+'<strong>'+esc(b.site)+'</strong>'+badge(b.status)+'</div>';
+    html+='<div style="font-size:13px;color:var(--muted);margin-top:6px">🕐 '+fmtTime(b.time)+' – '+fmtTime(b.endtime)+' · 📦 '+esc(b.loadType)+'</div>';
+    if(b.from||b.to)html+='<div style="font-size:13px;color:var(--muted)">🚚 '+esc(b.from||'—')+' → '+esc(b.to||'—')+'</div>';
+    if(b.notes)html+='<div style="font-size:12px;color:var(--muted);font-style:italic">'+esc(b.notes)+'</div>';
+    if(b.status==='declined'&&b.reason)html+='<div style="font-size:12px;color:#991B1B;font-style:italic">❌ Reason: '+esc(b.reason)+'</div>';
+    if(b.completedAt)html+='<div style="margin-top:6px"><span class="completed-stamp">🏁 Completed · '+fmtStamp(b.completedAt)+'</span></div>';
+    html+='<div style="font-size:11px;color:#9CA3AF;margin-top:4px">Submitted by '+esc(b.name)+'</div></div>';
+  });
+  $('day-detail-list').innerHTML=html;
+  var panel=$('day-detail');panel.classList.add('visible');
+  if(!quiet)panel.scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+
+/* ---------- events ---------- */
+document.querySelectorAll('nav button').forEach(function(b){b.addEventListener('click',function(){switchView(b.dataset.view);});});
+$('btn-submit').addEventListener('click',submitForm);
+$('btn-clear').addEventListener('click',clearForm);
+$('btn-unlock').addEventListener('click',checkPin);
+$('pin-input').addEventListener('keydown',function(e){if(e.key==='Enter')checkPin();});
+$('pin-input').addEventListener('input',function(){$('pin-error').textContent='';});
+$('btn-lock').addEventListener('click',adminLogout);
+$('btn-csv').addEventListener('click',exportCSV);
+$('btn-xlsx').addEventListener('click',exportExcel);
+$('btn-verify').addEventListener('click',verifyAndShowEdit);
+$('edit-verify-name').addEventListener('keydown',function(e){if(e.key==='Enter')verifyAndShowEdit();});
+$('btn-save-edit').addEventListener('click',saveEdit);
+$('e-loadtype').addEventListener('change',function(){$('e-other-wrap').style.display=this.value==='Other'?'block':'none';});
+$('edit-modal').addEventListener('click',function(e){if(e.target===this)closeEditModal();});
+document.addEventListener('keydown',function(e){if(e.key==='Escape'&&!$('edit-modal').classList.contains('hidden'))closeEditModal();});
+$('cal-prev').addEventListener('click',calPrev);
+$('cal-next').addEventListener('click',calNext);
+['f-search','f-status','f-vehicle'].forEach(function(id){$(id).addEventListener(id==='f-search'?'input':'change',renderList);});
+['adm-search','adm-status','adm-vehicle'].forEach(function(id){$(id).addEventListener(id==='adm-search'?'input':'change',renderAdmin);});
+$('view-form').addEventListener('change',function(e){
+  if(e.target.name==='vehicle'||e.target.name==='loadtype'){syncChecked();}
+  if(e.target.name==='vehicle'||['f-date','f-time','f-endtime'].indexOf(e.target.id)>=0)updateFormHints();
+  if(e.target.classList)e.target.classList.remove('invalid');
+  if($('form-error').classList.contains('visible'))$('form-error').classList.remove('visible');
+  if(e.target.name==='vehicle')$('veh-options').classList.remove('invalid');
+  if(e.target.name==='loadtype')$('load-options').classList.remove('invalid');
+});
+$('view-form').addEventListener('input',function(e){if(e.target.classList)e.target.classList.remove('invalid');});
+
+document.addEventListener('keydown',function(e){
+  if(e.key!=='Enter')return;
+  var t=e.target;
+  if(t.dataset&&t.dataset.enter==='odo-unlock'){unlockOdo(t.closest('.odo-unlock'),t.dataset.key);}
+  else if(t.classList&&t.classList.contains('cal-day')&&t.dataset.date){showDay(t.dataset.date);}
+});
+function unlockOdo(box,k){
+  var pin=box?box.querySelector('.odo-pin-input'):null;if(!pin)return;
+  if(pin.value===DRIVER_PIN){odoUnlocked[k]=true;box.querySelector('.odo-unlock-row').style.display='none';box.querySelector('.odo-fields').classList.add('visible');var first=box.querySelector('.odo-fields input');if(first)first.focus();}
+  else{pin.value='';pin.placeholder='Wrong PIN';pin.style.borderColor='#DC2626';setTimeout(function(){pin.placeholder='PIN';pin.style.borderColor='';},2000);}
+}
+document.addEventListener('click',function(e){
+  var el=e.target.closest('[data-act]');if(!el)return;
+  var act=el.dataset.act,k=el.dataset.key;
+  switch(act){
+    case 'close-modal':closeEditModal();break;
+    case 'cal-filter':calVehFilter=el.dataset.veh||'';buildCalFilter();renderCalendar();break;
+    case 'day':showDay(el.dataset.date);break;
+    case 'edit':openEditModal(k,false);break;
+    case 'admin-edit':openEditModal(k,true);break;
+    case 'complete':if(confirm('Mark this trip as completed?'))updateBooking(k,{completedAt:new Date().toISOString()}).then(function(){showToast('🏁 Trip marked as completed!','#0F766E');}).catch(fail);break;
+    case 'odo-unlock':unlockOdo(el.closest('.odo-unlock'),k);break;
+    case 'odo-save':var r=collectReadings(el.closest('.odo-fields'),true);if(r)updateBooking(k,r).then(function(){delete odoUnlocked[k];showToast('Readings saved!','#0F766E');}).catch(fail);break;
+    case 'odo-edit':odoEditOpen[k]=true;el.closest('.odo-readings-display').querySelector('.odo-edit-box').style.display='block';break;
+    case 'odo-cancel':delete odoEditOpen[k];el.closest('.odo-edit-box').style.display='none';break;
+    case 'odo-save-edit':var r2=collectReadings(el.closest('.odo-edit-box'),false);if(r2)updateBooking(k,r2).then(function(){delete odoEditOpen[k];showToast('Readings updated!','#0F766E');}).catch(fail);break;
+    case 'approve':approveBooking(k);break;
+    case 'decline-toggle':declineOpen[k]=!declineOpen[k];var w=$('reason-wrap-'+k);if(w){w.classList.toggle('visible',!!declineOpen[k]);if(declineOpen[k])$('reason-'+k).focus();}break;
+    case 'decline-confirm':declineBooking(k);break;
+    case 'reset':updateBooking(k,{status:'pending',reason:'',approvedAt:''}).catch(fail);break;
+    case 'delete':if(confirm('Permanently delete this booking?'))bookingsRef.child(k).remove().then(function(){showToast('Booking deleted.','#6B7280');}).catch(fail);break;
+    case 'status-apply':var sel=$('status-sel-'+k);if(sel)changeStatus(k,sel.value);break;
+  }
+});
+
+/* ---------- start ---------- */
+buildVehicleUI();
+$('f-date').min=todayStr();
+renderList();
+startDatabase();
+</script>
+</body>
+</html>
