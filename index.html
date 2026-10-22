@@ -3,15 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Vehicle Booking Request – Tyris Gauteng</title>
-<meta name="description" content="Tyris Gauteng – request the Crane Truck, VW Truck or Ops Bakkie.">
-<meta property="og:type" content="website">
-<meta property="og:site_name" content="Tyris Gauteng">
-<meta property="og:title" content="Vehicle Booking Request">
-<meta property="og:description" content="Tyris Gauteng – request the Crane Truck, VW Truck or Ops Bakkie.">
-<meta property="og:url" content="https://tyris-gauteng.github.io/vehicle-booking-request/">
-<meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="Vehicle Booking Request">
+<title>Vehicle Booking System – Tyris Gauteng</title>
 <style>
   :root {
     --brand:#1B3F8B;--brand-mid:#1B4FA8;--brand-lite:#E8EEF8;
@@ -243,12 +235,22 @@
     .day-pill{font-size:9px;padding:1px 2px;text-align:center;}
     .day-pill .pill-site{display:none;}
     .cal-weekdays div{font-size:10px;padding:8px 0;}
-    header{flex-wrap:wrap;padding:8px 12px;row-gap:6px;}
-    nav{width:100%;justify-content:space-between;}
-    nav button{flex:1;padding:6px 4px;font-size:11px;}
+    nav button{padding:5px 7px;font-size:10px;}
     .header-subtitle .sub2{display:none;}.admin-label{display:none;}
     .filters{padding:12px;}
   }
+  /* supplier field */
+  .field > label.sup-save{display:none;align-items:center;gap:8px;margin-top:8px;font-size:13px;color:var(--text);cursor:pointer;font-weight:400;}
+  .field > label.sup-save.visible{display:flex;}
+  .sup-save input{accent-color:var(--brand-mid);width:16px;height:16px;}
+  .sup-hint{font-size:12px;color:var(--muted);margin-top:5px;}
+  .sup-panel{background:#fff;border-radius:var(--radius);box-shadow:var(--shadow);margin-bottom:16px;}
+  .sup-panel summary{padding:14px 18px;cursor:pointer;font-weight:700;color:var(--brand);font-size:14px;}
+  .sup-panel .sup-body{padding:0 18px 14px;}
+  .sup-add{display:flex;gap:8px;margin-bottom:10px;}
+  .sup-add input{flex:1;padding:8px 11px;border:1.5px solid var(--border);border-radius:7px;font-family:inherit;font-size:14px;}
+  .sup-row{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:8px 2px;border-top:1px solid #EEF1F6;font-size:14px;}
+  .sup-row small{color:var(--muted);font-size:12px;margin-left:6px;}
 </style>
 </head>
 <body>
@@ -273,6 +275,12 @@
         <div class="veh-options" id="veh-options" role="radiogroup" aria-label="Vehicle"></div>
       </div>
       <div class="field"><label for="f-site">Site Name / Location <span class="req">*</span></label><input type="text" id="f-site" placeholder="e.g. Woodmead Western Woods" maxlength="120"></div>
+      <div class="field">
+        <label for="f-supplier">Supplier</label>
+        <input type="text" id="f-supplier" list="supplier-list" placeholder="Start typing, or pick a saved supplier" maxlength="100" autocomplete="off">
+        <label class="sup-save" id="f-sup-save"><input type="checkbox" id="f-sup-save-chk"> Save this supplier to the list for next time</label>
+        <div class="sup-hint" id="f-sup-hint">Leave blank if no supplier is involved.</div>
+      </div>
       <div class="field-row">
         <div class="field"><label for="f-from">From <span class="req">*</span></label><input type="text" id="f-from" placeholder="e.g. Yard / Depot" maxlength="120"></div>
         <div class="field"><label for="f-to">To <span class="req">*</span></label><input type="text" id="f-to" placeholder="e.g. Delivery address" maxlength="120"></div>
@@ -328,7 +336,7 @@
       <div class="stat"><div class="num" id="st-upcoming">0</div><div class="lbl">Upcoming</div></div>
     </div>
     <div class="filters">
-      <input type="text" id="f-search" placeholder="🔍 Search site or name…">
+      <input type="text" id="f-search" placeholder="🔍 Search site, supplier or name…">
       <select id="f-vehicle" aria-label="Vehicle filter"></select>
       <select id="f-status" aria-label="Status filter"><option value="">All Statuses</option><option value="pending">Pending</option><option value="approved">Approved</option><option value="declined">Declined</option></select>
     </div>
@@ -371,9 +379,19 @@
         </select>
       </div>
       <div id="admin-list"></div>
+      <details class="sup-panel" id="sup-panel">
+        <summary>🏪 Saved suppliers (<span id="sup-count">0</span>)</summary>
+        <div class="sup-body">
+          <div class="sup-add"><input type="text" id="sup-new" maxlength="100" placeholder="Add a supplier…" aria-label="New supplier name"><button class="btn-status-save" id="btn-sup-add">Add</button></div>
+          <div id="sup-list"></div>
+          <div class="sup-hint">Removing a supplier only takes it off the pick list. Past bookings keep the supplier name.</div>
+        </div>
+      </details>
     </div>
   </div>
 </main>
+
+<datalist id="supplier-list"></datalist>
 
 <!-- EDIT MODAL -->
 <div class="modal-overlay hidden" id="edit-modal">
@@ -391,6 +409,11 @@
     <div id="edit-form-fields" style="display:none">
       <div class="field"><label for="e-vehicle">Vehicle <span class="req">*</span></label><select id="e-vehicle"></select></div>
       <div class="field"><label for="e-site">Site Name / Location <span class="req">*</span></label><input type="text" id="e-site" maxlength="120"></div>
+      <div class="field">
+        <label for="e-supplier">Supplier</label>
+        <input type="text" id="e-supplier" list="supplier-list" maxlength="100" autocomplete="off" placeholder="Start typing, or pick a saved supplier">
+        <label class="sup-save" id="e-sup-save"><input type="checkbox" id="e-sup-save-chk"> Save this supplier to the list for next time</label>
+      </div>
       <div class="field-row">
         <div class="field"><label for="e-from">From <span class="req">*</span></label><input type="text" id="e-from" maxlength="120"></div>
         <div class="field"><label for="e-to">To <span class="req">*</span></label><input type="text" id="e-to" maxlength="120"></div>
@@ -446,6 +469,7 @@ var VEHICLES=[
    in their own section ("vehicleBookings") so the two sites never mix. */
 var firebaseConfig={apiKey:"AIzaSyD68zIJdJcaAjqmCEnd_f4wlr8O_7vO38M",authDomain:"tyris-crane-booking.firebaseapp.com",databaseURL:"https://tyris-crane-booking-default-rtdb.europe-west1.firebasedatabase.app",projectId:"tyris-crane-booking",storageBucket:"tyris-crane-booking.firebasestorage.app",messagingSenderId:"557970814071",appId:"1:557970814071:web:6e886e2cba940c61fcc272"};
 var DB_PATH='vehicleBookings';
+var SUPPLIERS_PATH='vehicleSuppliers';   // saved supplier pick list
 var ADMIN_PIN='5005';
 var DRIVER_PIN='6512';
 
@@ -458,6 +482,9 @@ var declineOpen={};      // booking keys with the decline reason box open
 var odoEditOpen={};      // booking keys with the readings edit box open
 var calVehFilter='';
 var calSelected='';
+var suppliers=[];        // {key,name,addedBy,addedAt}
+var suppliersRef=null;
+var suppliersOk=true;
 
 /* ---------- helpers ---------- */
 function $(id){return document.getElementById(id);}
@@ -498,10 +525,12 @@ function startDatabase(){
     if(typeof firebase==='undefined')throw new Error('no-sdk');
     firebase.initializeApp(firebaseConfig);
     bookingsRef=firebase.database().ref(DB_PATH);
+    suppliersRef=firebase.database().ref(SUPPLIERS_PATH);
   }catch(e){
     showDbError('⚠️ Could not load the booking database.<br>Please check your internet connection and refresh the page.');
     return;
   }
+  startSuppliers();
   setTimeout(function(){if(!dataLoaded&&!$('loading').classList.contains('error'))$('loading-msg').textContent='Still connecting… please check your internet connection.';},12000);
   bookingsRef.on('value',function(snapshot){
     dataLoaded=true;
@@ -517,6 +546,56 @@ function startDatabase(){
       ?'⚠️ The database refused access to vehicle bookings (permission denied).<br>The Firebase database rules need to allow the <strong>'+DB_PATH+'</strong> section.'
       :'⚠️ Could not connect to the booking database: '+esc(err&&err.message?err.message:err));
   });
+}
+
+/* ---------- saved suppliers ---------- */
+function supKey(s){return String(s||'').toLowerCase().replace(/[.,;:]+$/,'').replace(/\s+/g,' ').trim();}
+function cleanName(s){return String(s||'').replace(/\s+/g,' ').trim();}
+function findSupplier(name){var k=supKey(name);if(!k)return null;for(var i=0;i<suppliers.length;i++){if(supKey(suppliers[i].name)===k)return suppliers[i];}return null;}
+function startSuppliers(){
+  if(!suppliersRef)return;
+  suppliersRef.on('value',function(snap){
+    var list=[];snap.forEach(function(ch){var v=ch.val()||{};if(v.name)list.push({key:ch.key,name:v.name,addedBy:v.addedBy||'',addedAt:v.addedAt||''});});
+    list.sort(function(a,b){return a.name.localeCompare(b.name);});
+    suppliers=list;suppliersOk=true;renderSuppliers();
+  },function(){
+    suppliersOk=false;renderSuppliers();
+  });
+}
+function renderSuppliers(){
+  $('supplier-list').innerHTML=suppliers.map(function(s){return '<option value="'+esc(s.name)+'"></option>';}).join('');
+  $('sup-count').textContent=suppliers.length;
+  $('sup-list').innerHTML=!suppliersOk
+    ?'<div class="sup-hint" style="color:var(--danger)">The supplier list could not be loaded. The Firebase rules need to allow the <strong>'+SUPPLIERS_PATH+'</strong> section.</div>'
+    :suppliers.length?suppliers.map(function(s){return '<div class="sup-row"><span>'+esc(s.name)+(s.addedBy?'<small>added by '+esc(s.addedBy)+'</small>':'')+'</span><button class="btn-reset" style="color:#DC2626" data-act="sup-remove" data-key="'+esc(s.key)+'">Remove</button></div>';}).join('')
+    :'<div class="sup-hint">No suppliers saved yet.</div>';
+  $('f-sup-hint').textContent=suppliersOk?(suppliers.length?'Pick from '+suppliers.length+' saved supplier'+(suppliers.length===1?'':'s')+', or type a new one. Leave blank if no supplier is involved.':'Type the supplier name. Leave blank if no supplier is involved.'):'Type the supplier name. Leave blank if no supplier is involved.';
+  syncSupSave('f');syncSupSave('e');
+}
+/* show the "save" tick box only for a name that isn't on the list yet */
+function syncSupSave(prefix){
+  var v=$(prefix+'-supplier').value,show=suppliersOk&&!!cleanName(v)&&!findSupplier(v);
+  $(prefix+'-sup-save').classList.toggle('visible',show);
+  if(!show)$(prefix+'-sup-save-chk').checked=false;
+}
+/* use the saved spelling when someone types a known supplier in different case */
+function canonicalSupplier(v){var s=findSupplier(v);return s?s.name:cleanName(v);}
+function saveSupplier(name,by){
+  name=cleanName(name);
+  if(!name||!suppliersRef||findSupplier(name))return Promise.resolve();
+  return suppliersRef.push({name:name,addedBy:by||'',addedAt:new Date().toISOString()})
+    .then(function(){showToast('🏪 '+name+' saved to the supplier list.','#1B4FA8');})
+    .catch(function(){showToast('The supplier could not be saved to the list.','#DC2626');});
+}
+function addSupplierAdmin(){
+  var v=cleanName($('sup-new').value);if(!v)return;
+  if(findSupplier(v)){showToast(v+' is already on the list.','#6B7280');return;}
+  saveSupplier(v,'Approver').then(function(){$('sup-new').value='';});
+}
+function removeSupplier(key){
+  var s=null;suppliers.forEach(function(x){if(x.key===key)s=x;});if(!s)return;
+  if(!confirm('Remove "'+s.name+'" from the supplier list?\n\nPast bookings keep the supplier name.'))return;
+  suppliersRef.child(key).remove().then(function(){showToast('Supplier removed from the list.','#6B7280');}).catch(fail);
 }
 
 /* Re-render without wiping something a person is busy typing */
@@ -609,7 +688,7 @@ function setFormError(msg,invalidIds){
 }
 function submitForm(){
   if(!bookingsRef){alert('The booking database is not connected. Please refresh the page.');return;}
-  var f={name:$('f-name').value.trim(),vehicle:radioVal('vehicle'),site:$('f-site').value.trim(),from:$('f-from').value.trim(),to:$('f-to').value.trim(),date:$('f-date').value,time:$('f-time').value,endtime:$('f-endtime').value,load:radioVal('loadtype'),notes:$('f-notes').value.trim()};
+  var f={name:$('f-name').value.trim(),vehicle:radioVal('vehicle'),site:$('f-site').value.trim(),supplier:canonicalSupplier($('f-supplier').value),from:$('f-from').value.trim(),to:$('f-to').value.trim(),date:$('f-date').value,time:$('f-time').value,endtime:$('f-endtime').value,load:radioVal('loadtype'),notes:$('f-notes').value.trim()};
   var errs=[],bad=[];
   function need(ok,label,id){if(!ok){errs.push(label);bad.push(id);}}
   need(f.name,'Your Name','f-name');need(f.vehicle,'Vehicle','veh-options');need(f.site,'Site Name / Location','f-site');
@@ -622,14 +701,16 @@ function submitForm(){
   setFormError('');
   var loadType=f.load;
   if(loadType==='Other'){var ot=$('load-other-text').value.trim();loadType=ot?'Other: '+ot:'Other';}
-  var booking={id:Date.now(),vehicle:f.vehicle,name:f.name,site:f.site,from:f.from,to:f.to,date:f.date,time:f.time,endtime:f.endtime,loadType:loadType,notes:f.notes,status:'pending',reason:'',approvedAt:'',completedAt:'',truckStart:'',truckEnd:'',craneStart:'',craneEnd:'',odoSavedAt:'',submitted:new Date().toISOString()};
+  var booking={id:Date.now(),vehicle:f.vehicle,name:f.name,site:f.site,supplier:f.supplier,from:f.from,to:f.to,date:f.date,time:f.time,endtime:f.endtime,loadType:loadType,notes:f.notes,status:'pending',reason:'',approvedAt:'',completedAt:'',truckStart:'',truckEnd:'',craneStart:'',craneEnd:'',odoSavedAt:'',submitted:new Date().toISOString()};
   var btn=$('btn-submit');btn.disabled=true;
-  bookingsRef.push(booking).then(function(){btn.disabled=false;showToast('✓ '+veh(f.vehicle).name+' booking submitted! Awaiting approval.','#1B4FA8');clearForm();})
+  var saveSup=$('f-sup-save-chk').checked&&f.supplier;
+  bookingsRef.push(booking).then(function(){btn.disabled=false;showToast('✓ '+veh(f.vehicle).name+' booking submitted! Awaiting approval.','#1B4FA8');if(saveSup)setTimeout(function(){saveSupplier(f.supplier,f.name);},1200);clearForm();})
     .catch(function(e){btn.disabled=false;fail(e);});
 }
 function clearForm(){
-  ['f-name','f-site','f-from','f-to','f-date','f-time','f-endtime','f-notes','load-other-text'].forEach(function(id){$(id).value='';});
+  ['f-name','f-site','f-supplier','f-from','f-to','f-date','f-time','f-endtime','f-notes','load-other-text'].forEach(function(id){$(id).value='';});
   document.querySelectorAll('input[name="loadtype"],input[name="vehicle"]').forEach(function(r){r.checked=false;});
+  $('f-sup-save-chk').checked=false;syncSupSave('f');
   syncChecked();setFormError('');updateFormHints();
 }
 
@@ -690,7 +771,7 @@ function listFiltered(){
   var out=allBookings.filter(function(b){
     if(sf&&b.status!==sf)return false;
     if(vf&&b.vehicle!==vf)return false;
-    if(search&&String(b.site||'').toLowerCase().indexOf(search)<0&&String(b.name||'').toLowerCase().indexOf(search)<0)return false;
+    if(search&&[b.site,b.name,b.supplier].every(function(x){return String(x||'').toLowerCase().indexOf(search)<0;}))return false;
     return true;
   });
   out.sort(function(a,b){return String(b.date).localeCompare(String(a.date))||b.id-a.id;});
@@ -712,6 +793,7 @@ function renderList(){
     var k=b._key,v=veh(b.vehicle);
     html+='<div class="booking-card status-'+esc(b.status)+'" style="border-left-color:'+v.color+'">';
     html+='<div class="bc-header"><div class="bc-site">'+esc(b.site)+'</div><div class="bc-date">📅 '+fmtDate(b.date)+'</div></div>';
+    if(b.supplier)html+='<div class="bc-route">🏪 <strong>Supplier:</strong> '+esc(b.supplier)+'</div>';
     if(b.from||b.to)html+='<div class="bc-route">🚚 <strong>From:</strong> '+esc(b.from||'—')+' → <strong>To:</strong> '+esc(b.to||'—')+'</div>';
     html+='<div class="bc-meta">'+vehChip(b.vehicle)+'<span class="tag time">🕐 '+fmtTime(b.time)+' – '+fmtTime(b.endtime)+'</span><span class="tag load">📦 '+esc(b.loadType)+'</span>'+badge(b.status)+'</div>';
     if(b.notes)html+='<div class="bc-notes">"'+esc(b.notes)+'"</div>';
@@ -729,10 +811,10 @@ function renderList(){
 }
 
 /* ---------- exports ---------- */
-var EXPORT_HEADERS=['Submitted','Vehicle','Date','Start Time','End Time','Site','From','To','Load Type','Notes','Status','Decline Reason','Completed At','Odometer Start (km)','Odometer End (km)','Distance (km)','Crane Start (hrs)','Crane End (hrs)','Crane Hours Used','Submitted By'];
+var EXPORT_HEADERS=['Submitted','Vehicle','Date','Start Time','End Time','Site','Supplier','From','To','Load Type','Notes','Status','Decline Reason','Completed At','Odometer Start (km)','Odometer End (km)','Distance (km)','Crane Start (hrs)','Crane End (hrs)','Crane Hours Used','Submitted By'];
 function exportRow(b){
   var ts=num(b.truckStart),te=num(b.truckEnd),cs=num(b.craneStart),ce=num(b.craneEnd);
-  return [fmtStamp(b.submitted),veh(b.vehicle).name,fmtDate(b.date),fmtTime(b.time),fmtTime(b.endtime),b.site||'',b.from||'',b.to||'',b.loadType||'',b.notes||'',b.status||'',b.reason||'',fmtStamp(b.completedAt),b.truckStart||'',b.truckEnd||'',ts!==null&&te!==null?(te-ts).toFixed(1):'',b.craneStart||'',b.craneEnd||'',cs!==null&&ce!==null?(cs-ce).toFixed(1):'',b.name||''];
+  return [fmtStamp(b.submitted),veh(b.vehicle).name,fmtDate(b.date),fmtTime(b.time),fmtTime(b.endtime),b.site||'',b.supplier||'',b.from||'',b.to||'',b.loadType||'',b.notes||'',b.status||'',b.reason||'',fmtStamp(b.completedAt),b.truckStart||'',b.truckEnd||'',ts!==null&&te!==null?(te-ts).toFixed(1):'',b.craneStart||'',b.craneEnd||'',cs!==null&&ce!==null?(cs-ce).toFixed(1):'',b.name||''];
 }
 function download(content,type,filename){
   var blob=new Blob([content],{type:type});var url=URL.createObjectURL(blob);
@@ -770,7 +852,7 @@ function renderAdmin(){
   var rows=allBookings.filter(function(b){
     if(sf&&b.status!==sf)return false;
     if(vf&&b.vehicle!==vf)return false;
-    if(search&&String(b.site||'').toLowerCase().indexOf(search)<0&&String(b.name||'').toLowerCase().indexOf(search)<0)return false;
+    if(search&&[b.site,b.name,b.supplier].every(function(x){return String(x||'').toLowerCase().indexOf(search)<0;}))return false;
     return true;
   });
   rows.sort(function(a,b){return String(a.date).localeCompare(String(b.date))||byTime(a,b);});
@@ -782,6 +864,7 @@ function renderAdmin(){
     html+='<div class="admin-card '+esc(b.status)+'" style="border-left-color:'+v.color+'">';
     html+='<div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px"><div class="ac-site">'+esc(b.site)+'</div><div style="font-size:13px;color:var(--muted)">📅 '+fmtDate(b.date)+'</div></div>';
     html+='<div class="ac-meta">'+vehChip(b.vehicle)+'<span>🕐 '+fmtTime(b.time)+' – '+fmtTime(b.endtime)+'</span></div>';
+    if(b.supplier)html+='<div class="ac-meta"><span>🏪 <strong>Supplier:</strong> '+esc(b.supplier)+'</span></div>';
     if(b.from||b.to)html+='<div class="ac-meta"><span>🚚 <strong>From:</strong> '+esc(b.from||'—')+' → <strong>To:</strong> '+esc(b.to||'—')+'</span></div>';
     html+='<div class="ac-meta"><span>📦 '+esc(b.loadType)+'</span>'+badge(b.status)+'</div>';
     if(isPending){var c=checkClash(b.vehicle,b.date,b.time,b.endtime,k);if(c)html+='<div class="clash-warning block" style="display:block;margin:8px 0 0">⚠️ Clashes with an approved '+esc(v.name)+' booking: '+esc(c.site)+', '+fmtTime(c.time)+' – '+fmtTime(c.endtime)+'</div>';}
@@ -843,14 +926,14 @@ function verifyAndShowEdit(){
 }
 function populateEditForm(b){
   $('e-vehicle').value=veh(b.vehicle).id===b.vehicle?b.vehicle:VEHICLES[0].id;
-  $('e-site').value=b.site||'';$('e-from').value=b.from||'';$('e-to').value=b.to||'';
+  $('e-site').value=b.site||'';$('e-supplier').value=b.supplier||'';$('e-sup-save-chk').checked=false;syncSupSave('e');$('e-from').value=b.from||'';$('e-to').value=b.to||'';
   $('e-date').value=b.date||'';$('e-time').value=b.time||'';$('e-endtime').value=b.endtime||'';$('e-notes').value=b.notes||'';
   var lt=b.loadType||'',known=['Container','Plant / Machinery','Materials'];
   if(known.indexOf(lt)>=0){$('e-loadtype').value=lt;$('e-other-wrap').style.display='none';$('e-other-text').value='';}
   else{$('e-loadtype').value='Other';$('e-other-wrap').style.display='block';$('e-other-text').value=lt.replace(/^Other:?\s*/,'');}
 }
 function saveEdit(){
-  var u={vehicle:$('e-vehicle').value,site:$('e-site').value.trim(),from:$('e-from').value.trim(),to:$('e-to').value.trim(),date:$('e-date').value,time:$('e-time').value,endtime:$('e-endtime').value,notes:$('e-notes').value.trim()};
+  var u={vehicle:$('e-vehicle').value,site:$('e-site').value.trim(),supplier:canonicalSupplier($('e-supplier').value),from:$('e-from').value.trim(),to:$('e-to').value.trim(),date:$('e-date').value,time:$('e-time').value,endtime:$('e-endtime').value,notes:$('e-notes').value.trim()};
   var errs=[];
   if(!u.site)errs.push('Site Name');if(!u.from)errs.push('From');if(!u.to)errs.push('To');if(!u.date)errs.push('Date');if(!u.time)errs.push('Start Time');if(!u.endtime)errs.push('End Time');
   var box=$('edit-error');
@@ -862,7 +945,8 @@ function saveEdit(){
   var lt=$('e-loadtype').value;
   if(lt==='Other'){var ot=$('e-other-text').value.trim();lt=ot?'Other: '+ot:'Other';}
   u.loadType=lt;
-  updateBooking(editCurrentKey,u).then(function(){showToast('Booking updated!','#1B4FA8');closeEditModal();}).catch(fail);
+  var saveSup=$('e-sup-save-chk').checked&&u.supplier,by=editIsAdmin?'Approver':(findBooking(editCurrentKey)||{}).name;
+  updateBooking(editCurrentKey,u).then(function(){showToast('Booking updated!','#1B4FA8');closeEditModal();if(saveSup)setTimeout(function(){saveSupplier(u.supplier,by);},1200);}).catch(fail);
 }
 function closeEditModal(){$('edit-modal').classList.add('hidden');editCurrentKey=null;}
 
@@ -914,6 +998,7 @@ function showDay(dateStr,quiet){
     var v=veh(b.vehicle);
     html+='<div class="detail-item" style="border-left-color:'+v.color+'"><div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">'+vehChip(b.vehicle)+'<strong>'+esc(b.site)+'</strong>'+badge(b.status)+'</div>';
     html+='<div style="font-size:13px;color:var(--muted);margin-top:6px">🕐 '+fmtTime(b.time)+' – '+fmtTime(b.endtime)+' · 📦 '+esc(b.loadType)+'</div>';
+    if(b.supplier)html+='<div style="font-size:13px;color:var(--muted)">🏪 '+esc(b.supplier)+'</div>';
     if(b.from||b.to)html+='<div style="font-size:13px;color:var(--muted)">🚚 '+esc(b.from||'—')+' → '+esc(b.to||'—')+'</div>';
     if(b.notes)html+='<div style="font-size:12px;color:var(--muted);font-style:italic">'+esc(b.notes)+'</div>';
     if(b.status==='declined'&&b.reason)html+='<div style="font-size:12px;color:#991B1B;font-style:italic">❌ Reason: '+esc(b.reason)+'</div>';
@@ -938,6 +1023,11 @@ $('btn-xlsx').addEventListener('click',exportExcel);
 $('btn-verify').addEventListener('click',verifyAndShowEdit);
 $('edit-verify-name').addEventListener('keydown',function(e){if(e.key==='Enter')verifyAndShowEdit();});
 $('btn-save-edit').addEventListener('click',saveEdit);
+$('f-supplier').addEventListener('input',function(){syncSupSave('f');});
+$('e-supplier').addEventListener('input',function(){syncSupSave('e');});
+$('btn-sup-add').addEventListener('click',addSupplierAdmin);
+$('sup-new').addEventListener('keydown',function(e){if(e.key==='Enter')addSupplierAdmin();});
+document.addEventListener('click',function(e){var b=e.target.closest('[data-act="sup-remove"]');if(b)removeSupplier(b.dataset.key);});
 $('e-loadtype').addEventListener('change',function(){$('e-other-wrap').style.display=this.value==='Other'?'block':'none';});
 $('edit-modal').addEventListener('click',function(e){if(e.target===this)closeEditModal();});
 document.addEventListener('keydown',function(e){if(e.key==='Escape'&&!$('edit-modal').classList.contains('hidden'))closeEditModal();});

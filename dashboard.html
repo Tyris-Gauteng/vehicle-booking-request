@@ -1,0 +1,683 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Fleet Usage Dashboard – Tyris Gauteng</title>
+<style>
+  :root{
+    --brand:#1B3F8B;--brand-mid:#1B4FA8;--brand-lite:#E8EEF8;
+    --danger:#DC2626;--success:#16A34A;--warning:#B45309;
+    --text:#1A1A2E;--muted:#5B6474;--border:#D9DEE7;--rule:#E8EBF1;
+    --surface:#FFFFFF;--page-bg:#F0F4FA;--radius:10px;
+    --head:'Century Gothic','Questrial','URW Gothic','Avant Garde',system-ui,sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--page-bg);color:var(--text);min-height:100vh;font-size:14px;line-height:1.45;}
+  button,input,select{font-family:inherit;font-size:inherit;color:inherit;}
+  :focus-visible{outline:2.5px solid var(--brand-mid);outline-offset:2px;}
+
+  header{background:var(--brand);color:#fff;padding:0 18px;min-height:58px;display:flex;align-items:center;justify-content:space-between;gap:12px;box-shadow:0 2px 10px rgba(0,0,0,.25);position:sticky;top:0;z-index:50;}
+  .h-title{font-family:var(--head);font-size:17px;font-weight:700;letter-spacing:.2px;}
+  .h-title small{display:block;font-family:'Segoe UI',system-ui,sans-serif;font-weight:400;font-size:12px;color:rgba(255,255,255,.72);}
+  .h-actions{display:flex;gap:8px;align-items:center;}
+  .live{font-size:12px;color:rgba(255,255,255,.85);display:flex;align-items:center;gap:6px;white-space:nowrap;}
+  .live i{width:8px;height:8px;border-radius:50%;background:#4ADE80;box-shadow:0 0 0 3px rgba(74,222,128,.25);}
+  .live.off i{background:#FBBF24;box-shadow:none;}
+  .hbtn{background:transparent;border:1.5px solid rgba(255,255,255,.4);color:#fff;padding:6px 12px;border-radius:20px;font-size:12px;cursor:pointer;white-space:nowrap;}
+  .hbtn:hover{background:rgba(255,255,255,.15);}
+
+  main{max-width:1240px;margin:0 auto;padding:18px 16px 60px;}
+
+  /* filter bar */
+  .filters{display:flex;flex-wrap:wrap;gap:10px 14px;align-items:center;margin-bottom:18px;}
+  .filters select,.filters input[type=date]{padding:8px 11px;border:1.5px solid var(--border);border-radius:8px;background:#fff;}
+  .custom-range{display:none;gap:6px;align-items:center;}
+  .custom-range.on{display:flex;}
+  .chips{display:flex;gap:6px;flex-wrap:wrap;}
+  .chip{display:flex;align-items:center;gap:7px;border:1.5px solid var(--border);background:#fff;border-radius:20px;padding:6px 12px;cursor:pointer;font-size:13px;}
+  .chip .dot{width:10px;height:10px;border-radius:50%;background:var(--vc);}
+  .chip[aria-pressed="true"]{border-color:var(--vc);background:var(--vt);font-weight:600;}
+  .chip[aria-pressed="false"]{opacity:.6;}
+  .period-label{margin-left:auto;color:var(--muted);font-size:13px;}
+
+  /* fleet board (the hero) */
+  .board{background:var(--surface);border-radius:var(--radius);box-shadow:0 2px 12px rgba(27,63,139,.10);overflow:hidden;margin-bottom:18px;}
+  .board-row{display:grid;grid-template-columns:minmax(170px,1.3fr) 1.25fr .8fr .9fr .9fr minmax(170px,1.6fr);align-items:center;border-top:1px solid var(--rule);position:relative;}
+  .board-row::before{content:"";position:absolute;left:0;top:0;bottom:0;width:6px;background:var(--vc,transparent);}
+  .board-row.head{border-top:0;background:var(--brand-lite);font-size:12px;color:var(--muted);font-weight:600;}
+  .board-row.head::before,.board-row.total::before{display:none;}
+  .board-row > div{padding:14px 16px;}
+  .board-row.head > div{padding:9px 16px;}
+  .board-row.total{background:#F8FAFD;font-weight:600;}
+  .veh-cell{display:flex;align-items:center;gap:10px;padding-left:22px!important;}
+  .veh-cell .ic{font-size:24px;line-height:1;}
+  .veh-cell b{font-family:var(--head);font-size:15px;display:block;}
+  .veh-cell span{font-size:12px;color:var(--muted);}
+  .km{font-family:var(--head);font-size:30px;font-weight:700;letter-spacing:-.5px;font-variant-numeric:tabular-nums;line-height:1.1;}
+  .km small{font-size:13px;font-weight:400;color:var(--muted);letter-spacing:0;margin-left:3px;}
+  .total .km{font-size:24px;}
+  .fig{font-size:18px;font-weight:600;font-variant-numeric:tabular-nums;}
+  .fig small{font-size:12px;font-weight:400;color:var(--muted);margin-left:2px;}
+  .sub{display:block;font-size:12px;color:var(--muted);font-weight:400;}
+  .util{display:flex;align-items:center;gap:10px;}
+  .util .track{flex:1;height:10px;background:var(--rule);border-radius:5px;overflow:hidden;}
+  .util .fill{height:100%;background:var(--vc,var(--brand-mid));border-radius:5px;}
+  .util b{font-variant-numeric:tabular-nums;min-width:42px;text-align:right;}
+  .board-note{font-size:12px;color:var(--muted);padding:10px 16px;border-top:1px solid var(--rule);}
+
+  /* secondary figures */
+  .kpis{display:grid;grid-template-columns:repeat(5,1fr);gap:1px;background:var(--rule);border-radius:var(--radius);overflow:hidden;margin-bottom:18px;border:1px solid var(--rule);}
+  .kpi{background:var(--surface);padding:14px 16px;}
+  .kpi .v{font-size:22px;font-weight:700;font-variant-numeric:tabular-nums;}
+  .kpi .l{font-size:12px;color:var(--muted);}
+  .kpi.warn .v{color:var(--warning);}
+
+  /* panels */
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:18px;}
+  .panel{background:var(--surface);border-radius:var(--radius);border:1px solid var(--rule);padding:18px 18px 14px;min-width:0;}
+  .panel.wide{margin-bottom:18px;}
+  .p-head{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin-bottom:12px;flex-wrap:wrap;}
+  .p-head h2{font-family:var(--head);font-size:16px;font-weight:700;color:var(--brand);}
+  .p-head p{font-size:12px;color:var(--muted);margin-top:2px;}
+  .seg{display:inline-flex;border:1.5px solid var(--border);border-radius:8px;overflow:hidden;}
+  .seg button{border:0;background:#fff;padding:5px 11px;font-size:12px;cursor:pointer;}
+  .seg button + button{border-left:1.5px solid var(--border);}
+  .seg button[aria-pressed="true"]{background:var(--brand);color:#fff;}
+
+  /* bar list */
+  .bars{display:flex;flex-direction:column;}
+  .bar-row{display:grid;grid-template-columns:minmax(0,1fr) 120px 58px;gap:10px;align-items:center;padding:7px 4px;border-top:1px solid var(--rule);font-size:13px;}
+  .bar-row:first-child{border-top:0;}
+  .bar-row.click{cursor:pointer;border-radius:6px;}
+  .bar-row.click:hover{background:var(--brand-lite);}
+  .bar-row .nm{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .bar-row .nm em{font-style:normal;color:var(--muted);font-size:12px;margin-left:6px;}
+  .bar-row .track{height:8px;background:var(--rule);border-radius:4px;overflow:hidden;display:flex;}
+  .bar-row .track span{height:100%;}
+  .bar-row .n{text-align:right;font-variant-numeric:tabular-nums;font-weight:600;}
+  .bar-row .n small{display:block;font-weight:400;color:var(--muted);font-size:11px;}
+  .more{margin-top:8px;background:none;border:0;color:var(--brand-mid);cursor:pointer;font-size:13px;font-weight:600;padding:4px;}
+  .empty{color:var(--muted);font-size:13px;padding:18px 4px;text-align:center;}
+
+  /* chart */
+  .chart-wrap{width:100%;overflow-x:auto;}
+  .chart-wrap svg{display:block;width:100%;min-width:560px;height:auto;}
+  .legend{display:flex;gap:14px;flex-wrap:wrap;font-size:12px;color:var(--muted);margin-top:6px;}
+  .legend span{display:flex;align-items:center;gap:6px;}
+  .legend i{width:10px;height:10px;border-radius:2px;background:var(--vc);}
+
+  /* days */
+  .days{display:grid;grid-template-columns:repeat(7,1fr);gap:8px;align-items:end;height:150px;padding-top:6px;}
+  .day{display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;gap:5px;font-size:12px;color:var(--muted);}
+  .day .col{width:100%;max-width:44px;background:var(--brand-mid);border-radius:5px 5px 0 0;min-height:2px;}
+  .day b{color:var(--text);font-variant-numeric:tabular-nums;}
+
+  /* checks */
+  .check{display:grid;grid-template-columns:96px 120px minmax(0,1fr) minmax(0,.8fr);gap:10px;padding:8px 4px;border-top:1px solid var(--rule);font-size:13px;align-items:center;}
+  .check:first-child{border-top:0;}
+  .check .why{color:var(--warning);font-size:12px;}
+  .vtag{display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:600;padding:2px 8px;border-radius:12px;background:var(--vc);color:var(--vx);white-space:nowrap;}
+
+  /* trip log */
+  .log-tools{display:flex;gap:10px;flex-wrap:wrap;align-items:center;}
+  .log-tools input{padding:7px 11px;border:1.5px solid var(--border);border-radius:8px;min-width:220px;}
+  .btn{background:var(--brand);color:#fff;border:0;border-radius:8px;padding:8px 14px;cursor:pointer;font-weight:600;font-size:13px;}
+  .btn:hover{background:var(--brand-mid);}
+  .btn.ghost{background:#fff;color:var(--brand);border:1.5px solid var(--border);}
+  .table-wrap{overflow-x:auto;margin-top:12px;}
+  table{width:100%;border-collapse:collapse;font-size:13px;}
+  th{text-align:left;font-size:12px;color:var(--muted);font-weight:600;padding:8px 10px;border-bottom:2px solid var(--rule);white-space:nowrap;cursor:pointer;user-select:none;}
+  th.num,td.num{text-align:right;font-variant-numeric:tabular-nums;}
+  th[aria-sort="ascending"]::after{content:" ▲";font-size:9px;}
+  th[aria-sort="descending"]::after{content:" ▼";font-size:9px;}
+  td{padding:8px 10px;border-bottom:1px solid var(--rule);vertical-align:top;}
+  td.miss{color:var(--warning);}
+  tbody tr:hover{background:#F8FAFD;}
+  .log-foot{display:flex;justify-content:space-between;align-items:center;margin-top:10px;font-size:12px;color:var(--muted);gap:10px;flex-wrap:wrap;}
+
+  /* gate + loading */
+  .gate{max-width:360px;margin:70px auto;background:#fff;border-radius:var(--radius);box-shadow:0 2px 12px rgba(27,63,139,.12);padding:28px;text-align:center;}
+  .gate h1{font-family:var(--head);font-size:20px;color:var(--brand);margin-bottom:6px;}
+  .gate p{color:var(--muted);font-size:13px;margin-bottom:16px;}
+  .gate input{width:100%;padding:11px;border:1.5px solid var(--border);border-radius:8px;font-size:18px;text-align:center;letter-spacing:6px;margin-bottom:10px;}
+  .gate .err{color:var(--danger);font-size:13px;min-height:18px;margin-bottom:8px;}
+  .gate .btn{width:100%;padding:11px;}
+  #loading{display:flex;align-items:center;justify-content:center;gap:10px;padding:60px 10px;color:var(--muted);}
+  #loading.error{color:var(--danger);text-align:center;}
+  .spin{width:20px;height:20px;border:3px solid var(--rule);border-top-color:var(--brand-mid);border-radius:50%;animation:sp 0.8s linear infinite;}
+  @keyframes sp{to{transform:rotate(360deg);}}
+  @media (prefers-reduced-motion:reduce){.spin{animation:none;}}
+  #app{display:none;}
+
+  @media (max-width:980px){
+    .board-row{grid-template-columns:1.2fr 1fr 1fr;}
+    .board-row > div:nth-child(4),.board-row > div:nth-child(5){display:none;}
+    .board-row > div:nth-child(6){grid-column:1 / -1;padding-top:0;padding-left:22px;}
+    .board-row.head > div:nth-child(6){display:none;}
+    .kpis{grid-template-columns:repeat(3,1fr);}
+    .grid2{grid-template-columns:1fr;}
+    .period-label{margin-left:0;width:100%;}
+  }
+  @media (max-width:560px){
+    header{padding:8px 12px;flex-wrap:wrap;}
+    .live{display:none;}
+    .board-row{grid-template-columns:1fr 1fr;}
+    .board-row > div:nth-child(3){display:none;}
+    .kpis{grid-template-columns:1fr 1fr;}
+    .km{font-size:24px;}
+    .bar-row{grid-template-columns:minmax(0,1fr) 70px 52px;}
+    .check{grid-template-columns:1fr 1fr;}
+    .log-tools input{min-width:0;flex:1;}
+  }
+  @media print{
+    header .h-actions,.filters .chips,.log-tools,.more{display:none!important;}
+    body{background:#fff;}
+    header{position:static;box-shadow:none;}
+    .panel,.board{break-inside:avoid;box-shadow:none;}
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="h-title">Fleet Usage Dashboard<small>Tyris Gauteng · Vehicle Booking Request</small></div>
+  <div class="h-actions">
+    <span class="live off" id="live"><i></i><span id="live-txt">Connecting…</span></span>
+    <a class="hbtn" href="./" style="text-decoration:none">Booking app</a>
+    <button class="hbtn" id="btn-print">Print</button>
+    <button class="hbtn" id="btn-lock">Lock</button>
+  </div>
+</header>
+
+<div id="gate" class="gate" style="display:none">
+  <h1>Managers only</h1>
+  <p>Enter the manager PIN to view fleet usage.</p>
+  <input type="password" id="pin" inputmode="numeric" maxlength="8" aria-label="Manager PIN" autocomplete="off">
+  <div class="err" id="pin-err"></div>
+  <button class="btn" id="btn-pin">Open dashboard</button>
+</div>
+
+<div id="loading" style="display:none"><div class="spin"></div><span id="loading-msg">Loading bookings…</span></div>
+
+<main id="app">
+  <div class="filters">
+    <select id="period" aria-label="Period">
+      <option value="month">This month</option>
+      <option value="lastmonth">Last month</option>
+      <option value="3m" selected>Last 3 months</option>
+      <option value="12m">Last 12 months</option>
+      <option value="ytd">This year</option>
+      <option value="all">All time</option>
+      <option value="custom">Custom range…</option>
+    </select>
+    <div class="custom-range" id="custom-range">
+      <input type="date" id="d-from" aria-label="From date"> <span>to</span> <input type="date" id="d-to" aria-label="To date">
+    </div>
+    <div class="chips" id="veh-chips"></div>
+    <div class="period-label" id="period-label"></div>
+  </div>
+
+  <section class="board" aria-label="Usage per vehicle">
+    <div class="board-row head">
+      <div>Vehicle</div><div>Distance travelled</div><div>Trips</div><div>Crane hours</div><div>Booked hours</div><div>Utilisation</div>
+    </div>
+    <div id="board-rows"></div>
+    <div class="board-note" id="board-note"></div>
+  </section>
+
+  <section class="kpis" id="kpis" aria-label="Booking figures"></section>
+
+  <section class="panel wide">
+    <div class="p-head">
+      <div><h2>Month by month</h2><p id="trend-sub">Approved trips, split by vehicle</p></div>
+      <div class="seg" id="trend-metric" role="group" aria-label="Chart measure">
+        <button data-m="km" aria-pressed="true">Kilometres</button>
+        <button data-m="trips" aria-pressed="false">Trips</button>
+        <button data-m="hours" aria-pressed="false">Booked hours</button>
+      </div>
+    </div>
+    <div class="chart-wrap" id="trend"></div>
+    <div class="legend" id="trend-legend"></div>
+  </section>
+
+  <div class="grid2">
+    <section class="panel">
+      <div class="p-head"><div><h2>Sites visited</h2><p>Approved trips by booking site. Select a site to see its trips below.</p></div></div>
+      <div class="bars" id="sites"></div>
+    </section>
+    <section class="panel">
+      <div class="p-head">
+        <div><h2>Suppliers &amp; destinations</h2><p id="places-sub">Suppliers used on approved trips</p></div>
+        <div class="seg" id="places-mode" role="group" aria-label="Show">
+          <button data-m="supplier" aria-pressed="true">Suppliers</button>
+          <button data-m="from" aria-pressed="false">Collected from</button>
+          <button data-m="to" aria-pressed="false">Delivered to</button>
+        </div>
+      </div>
+      <div class="bars" id="places"></div>
+    </section>
+  </div>
+
+  <div class="grid2">
+    <section class="panel">
+      <div class="p-head"><div><h2>What was moved</h2><p>Approved trips by load type</p></div></div>
+      <div class="bars" id="loads"></div>
+    </section>
+    <section class="panel">
+      <div class="p-head"><div><h2>Who books</h2><p>Approved trips by requester</p></div></div>
+      <div class="bars" id="people"></div>
+    </section>
+  </div>
+
+  <div class="grid2">
+    <section class="panel">
+      <div class="p-head"><div><h2>Busiest days</h2><p>Approved trips by day of the week</p></div></div>
+      <div class="days" id="days"></div>
+    </section>
+    <section class="panel">
+      <div class="p-head"><div><h2>Needs attention</h2><p>Past trips without readings, and readings that look wrong</p></div></div>
+      <div id="checks"></div>
+    </section>
+  </div>
+
+  <section class="panel wide">
+    <div class="p-head">
+      <div><h2>Trip log</h2><p id="log-sub">Approved trips in the selected period</p></div>
+      <div class="log-tools">
+        <input type="search" id="log-search" placeholder="Search site, supplier, requester…" aria-label="Search trips">
+        <button class="btn ghost" id="btn-clear" style="display:none">Clear</button>
+        <button class="btn" id="btn-csv">Download CSV</button>
+      </div>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr id="log-head"></tr></thead>
+        <tbody id="log-body"></tbody>
+      </table>
+    </div>
+    <div class="log-foot"><span id="log-count"></span><button class="more" id="log-more" style="display:none">Show more trips</button></div>
+  </section>
+</main>
+
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<script>
+/* ================================================================
+   SETTINGS — keep VEHICLES and the Firebase details the same as in
+   index.html, so the dashboard reads the same bookings.
+   ================================================================ */
+var VEHICLES=[
+  {id:'crane',  name:'Crane Truck', colourName:'Blue',   color:'#2563EB', text:'#FFFFFF', tint:'#DBEAFE', icon:'🏗️', crane:true},
+  {id:'vw',     name:'VW Truck',    colourName:'Yellow', color:'#EAB308', text:'#1F1A00', tint:'#FEF9C3', icon:'🚚', crane:false},
+  {id:'bakkie', name:'Ops Bakkie',  colourName:'Green',  color:'#16A34A', text:'#FFFFFF', tint:'#DCFCE7', icon:'🛻', crane:false}
+];
+var firebaseConfig={apiKey:"AIzaSyD68zIJdJcaAjqmCEnd_f4wlr8O_7vO38M",authDomain:"tyris-crane-booking.firebaseapp.com",databaseURL:"https://tyris-crane-booking-default-rtdb.europe-west1.firebasedatabase.app",projectId:"tyris-crane-booking",storageBucket:"tyris-crane-booking.firebasestorage.app",messagingSenderId:"557970814071",appId:"1:557970814071:web:6e886e2cba940c61fcc272"};
+var DB_PATH='vehicleBookings';
+var MANAGER_PIN='5005';          // change to give managers their own PIN
+var WORK_HOURS_PER_DAY=9;        // working hours per weekday, used for utilisation
+var HIGH_KM_FLAG=400;            // a single trip above this many km is flagged for checking
+
+/* ---------- state ---------- */
+var raw=[];                      // every booking from the database
+var DEMO=/[?&]demo\b/.test(location.search);
+var state={period:'3m',from:'',to:'',veh:{},trend:'km',places:'supplier',search:'',sortKey:'date',sortDir:-1,logLimit:25,listOpen:{}};
+VEHICLES.forEach(function(v){state.veh[v.id]=true;});
+
+/* ---------- helpers ---------- */
+function $(id){return document.getElementById(id);}
+function esc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function pad(n){return String(n).padStart(2,'0');}
+function ymd(d){return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());}
+function parseYmd(s){var p=s.split('-');return new Date(+p[0],+p[1]-1,+p[2]);}
+function todayStr(){return ymd(new Date());}
+function fmtDate(s){if(!s)return'—';var p=s.split('-');return p[2]+'/'+p[1]+'/'+p[0];}
+function num(v){var n=parseFloat(v);return isNaN(n)?null:n;}
+function fmtN(n,dp){if(n==null||isNaN(n))return'—';return n.toLocaleString('en-ZA',{minimumFractionDigits:dp||0,maximumFractionDigits:dp||0});}
+function veh(id){for(var i=0;i<VEHICLES.length;i++){if(VEHICLES[i].id===id)return VEHICLES[i];}return {id:id||'',name:id||'Unknown vehicle',color:'#6B7280',text:'#FFFFFF',tint:'#F3F4F6',icon:'🚗',crane:false};}
+function vtag(id){var v=veh(id);return '<span class="vtag" style="--vc:'+v.color+';--vx:'+v.text+'">'+v.icon+' '+esc(v.name)+'</span>';}
+function mins(t){if(!t)return null;var p=t.split(':');return (+p[0])*60+(+p[1]);}
+var MONTHS=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+/* group spelling variants: "The Buzz ", "the buzz" and "THE BUZZ." count as one */
+function normKey(s){return String(s||'').toLowerCase().replace(/[.,;:]+$/,'').replace(/\s+/g,' ').trim();}
+
+/* turn a raw booking into the figures the dashboard needs */
+function enrich(b){
+  var ts=num(b.truckStart),te=num(b.truckEnd),cs=num(b.craneStart),ce=num(b.craneEnd);
+  var s=mins(b.time),e=mins(b.endtime);
+  return {
+    key:b._key,vehicle:b.vehicle||'',date:b.date||'',site:(b.site||'').trim(),supplier:(b.supplier||'').trim(),from:(b.from||'').trim(),to:(b.to||'').trim(),
+    load:(b.loadType||'').replace(/^Other:\s*/,'Other: '),name:(b.name||'').trim(),status:b.status||'pending',
+    submitted:b.submitted||'',time:b.time||'',endtime:b.endtime||'',
+    km:(ts!=null&&te!=null&&te>=ts)?te-ts:null,
+    craneHrs:(cs!=null&&ce!=null&&cs>=ce)?cs-ce:null,   // crane hours count down to service
+    bookedHrs:(s!=null&&e!=null&&e>s)?(e-s)/60:null,
+    hasReadings:!!(b.odoSavedAt||b.truckStart||b.truckEnd),
+    badReading:(ts!=null&&te!=null&&te<ts)
+  };
+}
+
+/* ---------- period ---------- */
+function periodRange(){
+  var t=new Date(),y=t.getFullYear(),m=t.getMonth(),f,to;
+  switch(state.period){
+    case 'month':f=new Date(y,m,1);to=new Date(y,m+1,0);break;
+    case 'lastmonth':f=new Date(y,m-1,1);to=new Date(y,m,0);break;
+    case '3m':f=new Date(y,m-2,1);to=new Date(y,m+1,0);break;
+    case '12m':f=new Date(y,m-11,1);to=new Date(y,m+1,0);break;
+    case 'ytd':f=new Date(y,0,1);to=new Date(y,11,31);break;
+    case 'custom':
+      f=state.from?parseYmd(state.from):null;to=state.to?parseYmd(state.to):null;break;
+    default:f=null;to=null;
+  }
+  if(!f||!to){ // all time (or incomplete custom) → span of the data
+    var ds=raw.map(function(b){return b.date;}).filter(Boolean).sort();
+    if(!f)f=ds.length?parseYmd(ds[0]):new Date(y,m,1);
+    if(!to)to=ds.length?parseYmd(ds[ds.length-1]):new Date(y,m+1,0);
+  }
+  return {from:ymd(f),to:ymd(to)};
+}
+function weekdaysBetween(a,b){ // inclusive, Mon–Fri
+  var d=parseYmd(a),end=parseYmd(b),n=0;
+  while(d<=end){var w=d.getDay();if(w>0&&w<6)n++;d.setDate(d.getDate()+1);}
+  return n;
+}
+
+/* ---------- main render ---------- */
+var view={};
+function render(){
+  var r=periodRange();
+  var inRange=raw.filter(function(b){return b.date&&b.date>=r.from&&b.date<=r.to&&isVehOn(b.vehicle);});
+  var trips=inRange.filter(function(b){return b.status==='approved';});
+  view={range:r,all:inRange,trips:trips};
+  $('period-label').textContent=fmtDate(r.from)+' – '+fmtDate(r.to);
+  renderBoard();renderKpis();renderTrend();renderSites();renderPlaces();renderLoads();renderPeople();renderDays();renderChecks();renderLog();
+}
+function isVehOn(id){return state.veh.hasOwnProperty(id)?state.veh[id]:true;}
+
+function sum(arr,f){var s=0,n=0;arr.forEach(function(x){var v=f(x);if(v!=null){s+=v;n++;}});return {s:s,n:n};}
+
+/* fleet board */
+function renderBoard(){
+  var r=view.range,today=todayStr();
+  var capTo=r.to<today?r.to:today;               // utilisation only counts days that have happened
+  var wd=r.from<=capTo?weekdaysBetween(r.from,capTo):0;
+  var cap=wd*WORK_HOURS_PER_DAY;
+  var html='',tot={km:0,kmN:0,trips:0,crane:0,craneN:0,hrs:0,cap:0};
+  VEHICLES.forEach(function(v){
+    if(!isVehOn(v.id))return;
+    var t=view.trips.filter(function(b){return b.vehicle===v.id;});
+    var past=t.filter(function(b){return b.date<=capTo;});
+    var km=sum(t,function(b){return b.km;}),cr=sum(t,function(b){return b.craneHrs;}),hr=sum(t,function(b){return b.bookedHrs;});
+    var pastHr=sum(past,function(b){return b.bookedHrs;}).s;
+    var util=cap?Math.min(100,pastHr/cap*100):0;
+    tot.km+=km.s;tot.kmN+=km.n;tot.trips+=t.length;tot.crane+=cr.s;tot.craneN+=cr.n;tot.hrs+=hr.s;tot.cap+=cap;tot.pastHr=(tot.pastHr||0)+pastHr;
+    html+='<div class="board-row" style="--vc:'+v.color+'">'
+      +'<div class="veh-cell"><span class="ic" aria-hidden="true">'+v.icon+'</span><div><b>'+esc(v.name)+'</b><span>'+(km.n?fmtN(km.s/km.n)+' km per trip on average':'No odometer readings yet')+'</span></div></div>'
+      +'<div><div class="km">'+fmtN(km.s)+'<small>km</small></div><span class="sub">from '+km.n+' of '+t.length+' trips with readings</span></div>'
+      +'<div><div class="fig">'+t.length+'</div><span class="sub">approved</span></div>'
+      +'<div>'+(v.crane?'<div class="fig">'+fmtN(cr.s,1)+'<small>hrs</small></div><span class="sub">'+cr.n+' trips recorded</span>':'<span class="sub">Not recorded</span>')+'</div>'
+      +'<div><div class="fig">'+fmtN(hr.s,1)+'<small>hrs</small></div><span class="sub">'+(t.length?fmtN(hr.s/t.length,1)+' hrs per trip':'—')+'</span></div>'
+      +'<div><div class="util"><div class="track"><div class="fill" style="width:'+util.toFixed(1)+'%"></div></div><b>'+fmtN(util)+'%</b></div><span class="sub">'+fmtN(pastHr,1)+' of '+fmtN(cap)+' working hours booked</span></div>'
+      +'</div>';
+  });
+  var tu=tot.cap?Math.min(100,tot.pastHr/tot.cap*100):0;
+  html+='<div class="board-row total"><div class="veh-cell"><div><b>Fleet total</b><span>'+(tot.kmN?fmtN(tot.km/tot.kmN)+' km per trip on average':'')+'</span></div></div>'
+    +'<div><div class="km">'+fmtN(tot.km)+'<small>km</small></div></div>'
+    +'<div><div class="fig">'+tot.trips+'</div></div>'
+    +'<div><div class="fig">'+fmtN(tot.crane,1)+'<small>hrs</small></div></div>'
+    +'<div><div class="fig">'+fmtN(tot.hrs,1)+'<small>hrs</small></div></div>'
+    +'<div><div class="util"><div class="track"><div class="fill" style="width:'+tu.toFixed(1)+'%"></div></div><b>'+fmtN(tu)+'%</b></div></div></div>';
+  $('board-rows').innerHTML=html;
+  $('board-note').textContent='Distance comes from the odometer readings drivers enter after each trip. Utilisation is booked hours on approved trips up to today, against '+WORK_HOURS_PER_DAY+' hours per weekday ('+wd+' weekdays in this period so far).';
+}
+
+/* secondary figures */
+function renderKpis(){
+  var all=view.all,t=view.trips,today=todayStr();
+  var decl=all.filter(function(b){return b.status==='declined';}).length;
+  var pend=all.filter(function(b){return b.status==='pending';}).length;
+  var missing=t.filter(function(b){return b.date<today&&!b.hasReadings;}).length;
+  var leads=t.map(function(b){if(!b.submitted||!b.date)return null;var s=new Date(b.submitted);var d=parseYmd(b.date);var x=(d-new Date(s.getFullYear(),s.getMonth(),s.getDate()))/864e5;return x>=0?x:null;}).filter(function(x){return x!=null;});
+  var lead=leads.length?leads.reduce(function(a,b){return a+b;},0)/leads.length:null;
+  var sites={};t.forEach(function(b){if(b.site)sites[normKey(b.site)]=1;});
+  var k=[
+    {v:all.length,l:'Booking requests'},
+    {v:all.length?fmtN(decl/all.length*100)+'%':'—',l:decl+' declined'+(pend?' · '+pend+' still pending':'')},
+    {v:Object.keys(sites).length,l:'Different sites served'},
+    {v:lead==null?'—':fmtN(lead,1)+' days',l:'Average notice given'},
+    {v:missing,l:'Past trips missing readings',warn:missing>0}
+  ];
+  $('kpis').innerHTML=k.map(function(x){return '<div class="kpi'+(x.warn?' warn':'')+'"><div class="v">'+x.v+'</div><div class="l">'+esc(x.l)+'</div></div>';}).join('');
+}
+
+/* monthly stacked bars (SVG, no chart library needed) */
+function renderTrend(){
+  var r=view.range,m=state.trend;
+  var a=parseYmd(r.from),b=parseYmd(r.to),months=[];
+  var d=new Date(a.getFullYear(),a.getMonth(),1);
+  while(d<=b&&months.length<60){months.push(d.getFullYear()+'-'+pad(d.getMonth()+1));d=new Date(d.getFullYear(),d.getMonth()+1,1);}
+  var vs=VEHICLES.filter(function(v){return isVehOn(v.id);});
+  var data={};months.forEach(function(k){data[k]={};vs.forEach(function(v){data[k][v.id]=0;});});
+  view.trips.forEach(function(t){var k=t.date.slice(0,7);if(!data[k]||data[k][t.vehicle]==null)return;
+    var val=m==='km'?t.km:m==='trips'?1:t.bookedHrs;if(val!=null)data[k][t.vehicle]+=val;});
+  var max=0;months.forEach(function(k){var s=0;vs.forEach(function(v){s+=data[k][v.id];});if(s>max)max=s;});
+  var unit=m==='km'?'km':m==='trips'?'trips':'hrs';
+  $('trend-sub').textContent=(m==='km'?'Kilometres travelled':m==='trips'?'Approved trips':'Hours booked')+' each month, split by vehicle';
+  if(!max){$('trend').innerHTML='<div class="empty">No approved trips with this measure in the selected period.</div>';$('trend-legend').innerHTML='';return;}
+  var step=niceStep(max/4),top=Math.ceil(max/step)*step;
+  var W=900,H=260,L=52,R=10,T=14,B=30,cw=(W-L-R)/months.length,bw=Math.min(54,cw*.62);
+  var s='<svg viewBox="0 0 '+W+' '+H+'" role="img" aria-label="Monthly '+unit+' by vehicle">';
+  for(var g=0;g<=top+1e-9;g+=step){var y=T+(H-T-B)*(1-g/top);
+    s+='<line x1="'+L+'" x2="'+(W-R)+'" y1="'+y+'" y2="'+y+'" stroke="#E8EBF1"/><text x="'+(L-8)+'" y="'+(y+4)+'" font-size="11" fill="#5B6474" text-anchor="end">'+fmtN(g)+'</text>';}
+  months.forEach(function(k,i){
+    var x=L+cw*i+(cw-bw)/2,yb=H-B,tot=0;
+    vs.forEach(function(v){var val=data[k][v.id];if(!val)return;tot+=val;var h=(H-T-B)*val/top;yb-=h;
+      s+='<rect x="'+x.toFixed(1)+'" y="'+yb.toFixed(1)+'" width="'+bw.toFixed(1)+'" height="'+Math.max(h,0).toFixed(1)+'" fill="'+v.color+'"><title>'+esc(v.name)+', '+MONTHS[+k.slice(5)-1]+' '+k.slice(0,4)+': '+fmtN(val,m==='hours'?1:0)+' '+unit+'</title></rect>';});
+    if(tot)s+='<text x="'+(x+bw/2).toFixed(1)+'" y="'+(yb-5).toFixed(1)+'" font-size="11" font-weight="600" fill="#1A1A2E" text-anchor="middle">'+fmtN(tot)+'</text>';
+    var lbl=MONTHS[+k.slice(5)-1]+(months.length<=12&&k.slice(5)!=='01'&&i?'':" '"+k.slice(2,4));
+    s+='<text x="'+(L+cw*i+cw/2).toFixed(1)+'" y="'+(H-10)+'" font-size="11" fill="#5B6474" text-anchor="middle">'+lbl+'</text>';
+  });
+  $('trend').innerHTML=s+'</svg>';
+  $('trend-legend').innerHTML=vs.map(function(v){return '<span style="--vc:'+v.color+'"><i></i>'+esc(v.name)+'</span>';}).join('');
+}
+function niceStep(x){if(x<=0)return 1;var p=Math.pow(10,Math.floor(Math.log10(x))),f=x/p;return (f<=1?1:f<=2?2:f<=5?5:10)*p;}
+
+/* group trips by a text field, merging spelling variants */
+function groupBy(trips,field){
+  var g={};
+  trips.forEach(function(t){var val=t[field];if(!val)return;var k=normKey(val);
+    if(!g[k])g[k]={key:k,names:{},trips:0,km:0,veh:{},last:''};
+    var x=g[k];x.names[val]=(x.names[val]||0)+1;x.trips++;if(t.km!=null)x.km+=t.km;x.veh[t.vehicle]=(x.veh[t.vehicle]||0)+1;if(t.date>x.last)x.last=t.date;});
+  return Object.keys(g).map(function(k){var x=g[k];x.label=Object.keys(x.names).sort(function(a,b){return x.names[b]-x.names[a];})[0];x.variants=Object.keys(x.names).length;return x;})
+    .sort(function(a,b){return b.trips-a.trips||b.km-a.km;});
+}
+function barList(el,rows,opts){
+  var id=el.id;
+  if(!rows.length){el.innerHTML='<div class="empty">'+(opts.empty||'Nothing to show for this period.')+'</div>';return;}
+  var max=rows[0].trips,lim=state.listOpen[id]?rows.length:8,h='';
+  rows.slice(0,lim).forEach(function(x){
+    var segs=VEHICLES.filter(function(v){return x.veh[v.id];}).map(function(v){return '<span style="width:'+(x.veh[v.id]/max*100).toFixed(1)+'%;background:'+v.color+'"></span>';}).join('');
+    var extra=opts.sub?opts.sub(x):'';
+    h+='<div class="bar-row'+(opts.click?' click':'')+'"'+(opts.click?' tabindex="0" role="button" data-q="'+esc(x.label)+'"':'')+' title="'+esc(x.label)+(x.variants>1?' ('+x.variants+' spellings merged)':'')+'">'
+      +'<div class="nm">'+esc(x.label)+(extra?'<em>'+extra+'</em>':'')+'</div><div class="track">'+segs+'</div>'
+      +'<div class="n">'+x.trips+'<small>'+(x.km?fmtN(x.km)+' km':'trips')+'</small></div></div>';
+  });
+  if(rows.length>8)h+='<button class="more" data-more="'+id+'">'+(state.listOpen[id]?'Show top 8 only':'Show all '+rows.length)+'</button>';
+  el.innerHTML=h;
+}
+function renderSites(){barList($('sites'),groupBy(view.trips,'site'),{click:true,sub:function(x){return 'last '+fmtDate(x.last);},empty:'No approved trips in this period.'});}
+function renderPlaces(){
+  var f=state.places;
+  var noSup=view.trips.filter(function(t){return !t.supplier;}).length;
+  $('places-sub').textContent=f==='supplier'?'Suppliers used on approved trips'+(noSup?' ('+noSup+' trips with no supplier)':''):f==='from'?'Where vehicles collected loads from':'Where vehicles dropped loads off';
+  barList($('places'),groupBy(view.trips,f),{click:true,sub:function(x){return 'last '+fmtDate(x.last);},empty:f==='supplier'?'No suppliers recorded on trips in this period.':'No pick-up or drop-off points recorded.'});
+}
+function renderLoads(){barList($('loads'),groupBy(view.trips,'load'),{});}
+function renderPeople(){barList($('people'),groupBy(view.trips,'name'),{click:true});}
+
+function renderDays(){
+  var names=['Mon','Tue','Wed','Thu','Fri','Sat','Sun'],c=[0,0,0,0,0,0,0];
+  view.trips.forEach(function(t){var w=parseYmd(t.date).getDay();c[(w+6)%7]++;});
+  var max=Math.max.apply(null,c)||1;
+  $('days').innerHTML=c.map(function(n,i){return '<div class="day"><b>'+n+'</b><div class="col" style="height:'+(n/max*100*0.78).toFixed(1)+'%"></div>'+names[i]+'</div>';}).join('');
+}
+
+function renderChecks(){
+  var today=todayStr(),items=[];
+  view.trips.forEach(function(t){
+    if(t.date<today&&!t.hasReadings)items.push({t:t,why:'No odometer reading'});
+    else if(t.badReading)items.push({t:t,why:'End reading lower than start'});
+    else if(t.km!=null&&t.km>HIGH_KM_FLAG)items.push({t:t,why:fmtN(t.km)+' km in one trip'});
+  });
+  items.sort(function(a,b){return b.t.date.localeCompare(a.t.date);});
+  if(!items.length){$('checks').innerHTML='<div class="empty">All past trips in this period have readings.</div>';return;}
+  var lim=state.listOpen.checks?items.length:7;
+  var h=items.slice(0,lim).map(function(x){return '<div class="check"><span>'+fmtDate(x.t.date)+'</span><span>'+vtag(x.t.vehicle)+'</span><span>'+esc(x.t.site||'—')+'<span class="sub">'+esc(x.t.name)+'</span></span><span class="why">'+esc(x.why)+'</span></div>';}).join('');
+  if(items.length>7)h+='<button class="more" data-more="checks">'+(state.listOpen.checks?'Show fewer':'Show all '+items.length)+'</button>';
+  $('checks').innerHTML=h;
+}
+
+/* trip log */
+var COLS=[
+  {k:'date',l:'Date'},{k:'vehicle',l:'Vehicle'},{k:'site',l:'Site'},{k:'supplier',l:'Supplier'},{k:'from',l:'Collected from'},{k:'to',l:'Delivered to'},
+  {k:'load',l:'Load'},{k:'name',l:'Requested by'},{k:'km',l:'Km',num:1},{k:'craneHrs',l:'Crane hrs',num:1},{k:'bookedHrs',l:'Booked hrs',num:1}
+];
+function logRows(){
+  var q=normKey(state.search);
+  var rows=view.trips.filter(function(t){if(!q)return true;return [t.site,t.supplier,t.from,t.to,t.name,t.load,veh(t.vehicle).name].some(function(s){return normKey(s).indexOf(q)>=0;});});
+  var k=state.sortKey,d=state.sortDir;
+  rows.sort(function(a,b){var x=a[k],y=b[k];if(k==='vehicle'){x=veh(x).name;y=veh(y).name;}
+    if(x==null&&y==null)return 0;if(x==null)return 1;if(y==null)return -1;
+    return (typeof x==='number'?x-y:String(x).localeCompare(String(y)))*d||(b.date.localeCompare(a.date));});
+  return rows;
+}
+function renderLog(){
+  $('log-head').innerHTML=COLS.map(function(c){var s=state.sortKey===c.k?(state.sortDir>0?'ascending':'descending'):'none';
+    return '<th class="'+(c.num?'num':'')+'" data-sort="'+c.k+'" aria-sort="'+s+'" tabindex="0">'+c.l+'</th>';}).join('');
+  var rows=logRows(),today=todayStr();
+  var shown=rows.slice(0,state.logLimit);
+  $('log-body').innerHTML=shown.length?shown.map(function(t){
+    return '<tr><td>'+fmtDate(t.date)+'</td><td>'+vtag(t.vehicle)+'</td><td>'+esc(t.site)+'</td><td>'+esc(t.supplier)+'</td><td>'+esc(t.from)+'</td><td>'+esc(t.to)+'</td><td>'+esc(t.load)+'</td><td>'+esc(t.name)+'</td>'
+      +'<td class="num'+(t.km==null&&t.date<today?' miss':'')+'">'+(t.km==null?(t.date<today?'missing':'—'):fmtN(t.km))+'</td>'
+      +'<td class="num">'+(veh(t.vehicle).crane?fmtN(t.craneHrs,1):'')+'</td><td class="num">'+fmtN(t.bookedHrs,1)+'</td></tr>';
+  }).join(''):'<tr><td colspan="'+COLS.length+'" class="empty">No trips match.</td></tr>';
+  var kmS=sum(rows,function(t){return t.km;}).s;
+  $('log-count').textContent=rows.length+' trips'+(state.search?' matching "'+state.search+'"':'')+' · '+fmtN(kmS)+' km';
+  $('log-more').style.display=rows.length>state.logLimit?'inline-block':'none';
+  $('btn-clear').style.display=state.search?'inline-block':'none';
+  $('log-sub').textContent='Approved trips in the selected period'+(state.search?', filtered':'');
+}
+function downloadCsv(){
+  var rows=logRows(),head=['Date','Vehicle','Site','Supplier','Collected from','Delivered to','Load','Requested by','Start','End','Km','Crane hrs','Booked hrs'];
+  var lines=[head].concat(rows.map(function(t){return [fmtDate(t.date),veh(t.vehicle).name,t.site,t.supplier,t.from,t.to,t.load,t.name,t.time,t.endtime,
+    t.km==null?'':t.km.toFixed(1),t.craneHrs==null?'':t.craneHrs.toFixed(1),t.bookedHrs==null?'':t.bookedHrs.toFixed(2)];}));
+  var csv=lines.map(function(r){return r.map(function(c){c=String(c==null?'':c);return /[",\n]/.test(c)?'"'+c.replace(/"/g,'""')+'"':c;}).join(',');}).join('\r\n');
+  var blob=new Blob(['\ufeff'+csv],{type:'text/csv;charset=utf-8'}),a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);a.download='fleet-trips_'+view.range.from+'_to_'+view.range.to+'.csv';
+  document.body.appendChild(a);a.click();setTimeout(function(){URL.revokeObjectURL(a.href);a.remove();},500);
+}
+
+/* ---------- events ---------- */
+function buildChips(){
+  $('veh-chips').innerHTML=VEHICLES.map(function(v){return '<button class="chip" style="--vc:'+v.color+';--vt:'+v.tint+'" data-veh="'+v.id+'" aria-pressed="'+(state.veh[v.id]?'true':'false')+'"><span class="dot"></span>'+v.icon+' '+esc(v.name)+'</button>';}).join('');
+}
+function setSearch(q){state.search=q;$('log-search').value=q;state.logLimit=25;renderLog();}
+document.addEventListener('click',function(e){
+  var c=e.target.closest('[data-veh]');
+  if(c){var on=Object.keys(state.veh).filter(function(k){return state.veh[k];});
+    if(on.length===1&&state.veh[c.dataset.veh])return;   // keep at least one vehicle selected
+    state.veh[c.dataset.veh]=!state.veh[c.dataset.veh];buildChips();render();return;}
+  var m=e.target.closest('#trend-metric button');if(m){state.trend=m.dataset.m;segPress('trend-metric',m);renderTrend();return;}
+  var p=e.target.closest('#places-mode button');if(p){state.places=p.dataset.m;segPress('places-mode',p);renderPlaces();return;}
+  var mo=e.target.closest('[data-more]');if(mo){var id=mo.dataset.more;state.listOpen[id]=!state.listOpen[id];render();return;}
+  var q=e.target.closest('[data-q]');if(q){setSearch(q.dataset.q);$('log-search').closest('.panel').scrollIntoView({behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth'});return;}
+  var th=e.target.closest('th[data-sort]');if(th){sortBy(th.dataset.sort);return;}
+});
+document.addEventListener('keydown',function(e){
+  if(e.key!=='Enter'&&e.key!==' ')return;
+  var q=e.target.closest&&e.target.closest('[data-q],th[data-sort]');if(q){e.preventDefault();q.click();}
+});
+function sortBy(k){if(state.sortKey===k)state.sortDir*=-1;else{state.sortKey=k;state.sortDir=(k==='date'||COLS.some(function(c){return c.k===k&&c.num;}))?-1:1;}renderLog();}
+function segPress(id,btn){document.querySelectorAll('#'+id+' button').forEach(function(b){b.setAttribute('aria-pressed',b===btn?'true':'false');});}
+$('period').addEventListener('change',function(){state.period=this.value;$('custom-range').classList.toggle('on',state.period==='custom');
+  if(state.period==='custom'&&!state.from){var r=periodRange();state.from=r.from;state.to=r.to;$('d-from').value=r.from;$('d-to').value=r.to;}render();});
+$('d-from').addEventListener('change',function(){state.from=this.value;render();});
+$('d-to').addEventListener('change',function(){state.to=this.value;render();});
+$('log-search').addEventListener('input',function(){state.search=this.value;state.logLimit=25;renderLog();});
+$('btn-clear').addEventListener('click',function(){setSearch('');});
+$('log-more').addEventListener('click',function(){state.logLimit+=100;renderLog();});
+$('btn-csv').addEventListener('click',downloadCsv);
+$('btn-print').addEventListener('click',function(){window.print();});
+$('btn-lock').addEventListener('click',function(){try{sessionStorage.removeItem('tyris_dash_ok');}catch(e){}location.reload();});
+
+/* ---------- PIN gate ---------- */
+function unlocked(){try{return sessionStorage.getItem('tyris_dash_ok')==='1';}catch(e){return false;}}
+function tryPin(){
+  if($('pin').value===MANAGER_PIN){try{sessionStorage.setItem('tyris_dash_ok','1');}catch(e){}$('gate').style.display='none';start();}
+  else{$('pin-err').textContent='That PIN is not correct. Try again.';$('pin').value='';$('pin').focus();}
+}
+$('btn-pin').addEventListener('click',tryPin);
+$('pin').addEventListener('keydown',function(e){if(e.key==='Enter')tryPin();});
+
+/* ---------- data ---------- */
+function setLive(ok,txt){$('live').classList.toggle('off',!ok);$('live-txt').textContent=txt;}
+function loaded(list){
+  raw=list.map(enrich);
+  $('loading').style.display='none';$('app').style.display='block';
+  render();
+}
+function start(){
+  buildChips();
+  $('loading').style.display='flex';
+  if(DEMO){setLive(true,'Sample data');loaded(sampleData());return;}
+  try{
+    if(typeof firebase==='undefined')throw new Error('no-sdk');
+    firebase.initializeApp(firebaseConfig);
+    firebase.database().ref(DB_PATH).on('value',function(snap){
+      var list=[];snap.forEach(function(ch){var b=ch.val()||{};b._key=ch.key;list.push(b);});
+      var t=new Date();setLive(true,'Live · updated '+pad(t.getHours())+':'+pad(t.getMinutes()));
+      loaded(list);
+    },function(err){
+      $('loading').classList.add('error');
+      $('loading-msg').innerHTML=(err&&/permission/i.test(err.message||'')?'The database refused access to <strong>'+DB_PATH+'</strong>. Check the Firebase rules.':'Could not read bookings: '+esc(err&&err.message));
+      setLive(false,'Not connected');
+    });
+  }catch(e){
+    $('loading').classList.add('error');
+    $('loading-msg').textContent='Could not load the booking database. Check your internet connection and refresh the page.';
+    setLive(false,'Offline');
+  }
+}
+
+/* sample data for previewing the layout: open dashboard.html?demo */
+function sampleData(){
+  var sites=['The Buzz – Douglasdale','VBS – 82 Wessel Road','Show units – Fourways','Tyris Yard','the buzz – douglasdale'];
+  var from=['Builders Warehouse Rivonia','Corobrik Lanseria','Tyris Yard','Cashbuild Randburg','Plant hire – Midrand','Tile depot Kya Sand'];
+  var people=['Johan','Thabo','Gugu','Pieter','Lerato'];
+  var loads=['Materials (Bricks, tiles, etc.)','Container','Plant / Machinery','Other: Scaffolding'];
+  var seed=7;function rnd(){seed=(seed*16807)%2147483647;return (seed-1)/2147483646;}
+  function pick(a){return a[Math.floor(rnd()*a.length)];}
+  var out=[],odo={crane:182400,vw:64100,bakkie:121300},crane=500,t=new Date(),today=todayStr();
+  for(var i=0;i<230;i++){
+    var d=new Date(t.getFullYear(),t.getMonth()-7,1);d.setDate(d.getDate()+Math.floor(rnd()*240));
+    if(d.getDay()===0)d.setDate(d.getDate()+1);
+    var v=pick(['crane','crane','vw','vw','bakkie','bakkie','bakkie']),ds=ymd(d);
+    var st=7+Math.floor(rnd()*6),len=1+Math.floor(rnd()*5);
+    var status=rnd()<.1?'declined':(ds>today&&rnd()<.4?'pending':'approved');
+    var km=Math.round(15+rnd()*(v==='bakkie'?90:140)),b={_key:'k'+i,id:i,vehicle:v,site:pick(sites),from:pick(from),to:'',date:ds,time:pad(st)+':00',endtime:pad(Math.min(st+len,18))+':00',
+      loadType:pick(loads),name:pick(people),status:status,submitted:new Date(d.getTime()-864e5*(1+Math.floor(rnd()*6))).toISOString()};
+    b.to=b.site;if(b.from!=='Tyris Yard'&&rnd()>.15)b.supplier=b.from.replace(/ Rivonia| Lanseria| Randburg| Kya Sand/,'');
+    if(status==='approved'&&ds<today&&rnd()>.08){b.truckStart=String(odo[v]);odo[v]+=km;b.truckEnd=String(odo[v]);b.odoSavedAt='x';
+      if(v==='crane'){b.craneStart=String(crane);crane-=Math.round(rnd()*30)/10;b.craneEnd=String(crane.toFixed(1));}}
+    out.push(b);
+  }
+  return out;
+}
+
+/* ---------- go ---------- */
+if(DEMO||unlocked())start();
+else{$('gate').style.display='block';setTimeout(function(){$('pin').focus();},50);}
+</script>
+</body>
+</html>
