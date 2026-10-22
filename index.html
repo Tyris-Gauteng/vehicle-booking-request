@@ -361,7 +361,7 @@
     <div id="admin-panel" style="display:none">
       <div class="admin-header">
         <div><h2>🛠 Approvals Panel</h2><p>Review and action vehicle booking requests</p></div>
-        <button class="btn-logout" id="btn-lock">Lock Panel</button>
+        <div style="display:flex;gap:8px;flex-wrap:wrap"><a class="btn-logout" href="dashboard.html" style="text-decoration:none">📊 Dashboard</a><button class="btn-logout" id="btn-lock">Lock Panel</button></div>
       </div>
       <div class="admin-stats">
         <div class="adm-stat pend"><div class="num" id="adm-pend">0</div><div class="lbl">Pending</div></div>
@@ -839,7 +839,7 @@ function exportExcel(){
 
 /* ---------- approvals ---------- */
 function checkPin(){
-  if($('pin-input').value===ADMIN_PIN){adminUnlocked=true;$('admin-login').style.display='none';$('admin-panel').style.display='block';$('pin-input').value='';renderAdmin();}
+  if($('pin-input').value===ADMIN_PIN){adminUnlocked=true;try{sessionStorage.setItem('tyris_dash_ok','1');}catch(e){}$('admin-login').style.display='none';$('admin-panel').style.display='block';$('pin-input').value='';renderAdmin();}
   else{$('pin-error').textContent='Incorrect PIN. Please try again.';$('pin-input').value='';}
 }
 function adminLogout(){adminUnlocked=false;$('admin-panel').style.display='none';$('admin-login').style.display='block';$('pin-input').value='';}
