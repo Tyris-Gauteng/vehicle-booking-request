@@ -192,8 +192,8 @@
 
 <div id="gate" class="gate" style="display:none">
   <h1>Managers only</h1>
-  <p>Enter the manager PIN to view fleet usage.</p>
-  <input type="password" id="pin" inputmode="numeric" maxlength="8" aria-label="Manager PIN" autocomplete="off">
+  <p>Enter your 4-digit approver code to view fleet usage.</p>
+  <input type="password" id="pin" inputmode="numeric" maxlength="4" aria-label="Your 4-digit code" autocomplete="off">
   <div class="err" id="pin-err"></div>
   <button class="btn" id="btn-pin">Open dashboard</button>
 </div>
@@ -265,7 +265,13 @@
       <div class="bars" id="loads"></div>
     </section>
     <section class="panel">
-      <div class="p-head"><div><h2>Who books</h2><p>Approved trips by requester</p></div></div>
+      <div class="p-head">
+        <div><h2>Who asks for trips</h2><p id="people-sub">Approved trips by the person who requested the load</p></div>
+        <div class="seg" id="people-mode" role="group" aria-label="Show">
+          <button data-m="requestedBy" aria-pressed="true">Requested by</button>
+          <button data-m="name" aria-pressed="false">Booked by</button>
+        </div>
+      </div>
       <div class="bars" id="people"></div>
     </section>
   </div>
@@ -314,14 +320,23 @@ var VEHICLES=[
 ];
 var firebaseConfig={apiKey:"AIzaSyD68zIJdJcaAjqmCEnd_f4wlr8O_7vO38M",authDomain:"tyris-crane-booking.firebaseapp.com",databaseURL:"https://tyris-crane-booking-default-rtdb.europe-west1.firebasedatabase.app",projectId:"tyris-crane-booking",storageBucket:"tyris-crane-booking.firebasestorage.app",messagingSenderId:"557970814071",appId:"1:557970814071:web:6e886e2cba940c61fcc272"};
 var DB_PATH='vehicleBookings';
-var MANAGER_PIN='5005';          // change to give managers their own PIN
+/* Approver codes: keep these the same as USERS in index.html (admins only) */
+var MANAGER_CODES=[
+  '6edc2212cd3a331df165206bb9215001197e0ab9510f5ce0c4f84fcc5a181e62',
+  '5745bc95e9875e37a28aba44c6f17c8ca99d054bff3fcb293cb9ac20e315807d',
+  '35c4713b1d949ce4b05c67eecccaa9c62abcc0350ad75d46e7568feda2aceb07',
+  '6806a9f24206bb6bb54cfe1bd2a6d76070dfb9b1748c674250c9d595afc1b26b',
+  '19f9cb9a973f81f2d012ed891629542f6ad1e420599967c88a6056e8b843b501',
+  '0fc4ca6898c0005c07fccb8de2b20a5906294d48f25712cfedb316aaf1503ab6',
+  'dc57d2bdf7c3ff19ef2ae3d2993837ae453447ad5af57034e72f185329fa7b7d'
+];
 var WORK_HOURS_PER_DAY=9;        // working hours per weekday, used for utilisation
 var HIGH_KM_FLAG=400;            // a single trip above this many km is flagged for checking
 
 /* ---------- state ---------- */
 var raw=[];                      // every booking from the database
 var DEMO=/[?&]demo\b/.test(location.search);
-var state={period:'3m',from:'',to:'',veh:{},trend:'km',places:'supplier',search:'',sortKey:'date',sortDir:-1,logLimit:25,listOpen:{}};
+var state={period:'3m',from:'',to:'',veh:{},trend:'km',places:'supplier',people:'requestedBy',search:'',sortKey:'date',sortDir:-1,logLimit:25,listOpen:{}};
 VEHICLES.forEach(function(v){state.veh[v.id]=true;});
 
 /* ---------- helpers ---------- */
@@ -347,7 +362,7 @@ function enrich(b){
   var s=mins(b.time),e=mins(b.endtime);
   return {
     key:b._key,vehicle:b.vehicle||'',date:b.date||'',site:(b.site||'').trim(),supplier:(b.supplier||'').trim(),from:(b.from||'').trim(),to:(b.to||'').trim(),
-    load:(b.loadType||'').replace(/^Other:\s*/,'Other: '),name:(b.name||'').trim(),status:b.status||'pending',
+    load:(b.loadType||'').replace(/^Other:\s*/,'Other: '),name:(b.name||'').trim(),requestedBy:(b.requestedBy||'').trim(),status:b.status||'pending',
     submitted:b.submitted||'',time:b.time||'',endtime:b.endtime||'',
     km:(ts!=null&&te!=null&&te>=ts)?te-ts:null,
     craneHrs:(cs!=null&&ce!=null&&cs>=ce)?cs-ce:null,   // crane hours count down to service
@@ -514,7 +529,11 @@ function renderPlaces(){
   barList($('places'),groupBy(view.trips,f),{click:true,sub:function(x){return 'last '+fmtDate(x.last);},empty:f==='supplier'?'No suppliers recorded on trips in this period.':'No pick-up or drop-off points recorded.'});
 }
 function renderLoads(){barList($('loads'),groupBy(view.trips,'load'),{});}
-function renderPeople(){barList($('people'),groupBy(view.trips,'name'),{click:true});}
+function renderPeople(){
+  var f=state.people,none=view.trips.filter(function(t){return !t[f];}).length;
+  $('people-sub').textContent=(f==='requestedBy'?'Approved trips by the person who requested the load':'Approved trips by the person who booked them in the app')+(none?' ('+none+' trips with no name recorded)':'');
+  barList($('people'),groupBy(view.trips,f),{click:true,sub:function(x){return 'last '+fmtDate(x.last);},empty:f==='requestedBy'?'No requesters recorded on trips in this period. Bookings made before the Requested by field was added don\'t have one.':'No trips in this period.'});
+}
 
 function renderDays(){
   var names=['Mon','Tue','Wed','Thu','Fri','Sat','Sun'],c=[0,0,0,0,0,0,0];
@@ -533,7 +552,7 @@ function renderChecks(){
   items.sort(function(a,b){return b.t.date.localeCompare(a.t.date);});
   if(!items.length){$('checks').innerHTML='<div class="empty">All past trips in this period have readings.</div>';return;}
   var lim=state.listOpen.checks?items.length:7;
-  var h=items.slice(0,lim).map(function(x){return '<div class="check"><span>'+fmtDate(x.t.date)+'</span><span>'+vtag(x.t.vehicle)+'</span><span>'+esc(x.t.site||'—')+'<span class="sub">'+esc(x.t.name)+'</span></span><span class="why">'+esc(x.why)+'</span></div>';}).join('');
+  var h=items.slice(0,lim).map(function(x){return '<div class="check"><span>'+fmtDate(x.t.date)+'</span><span>'+vtag(x.t.vehicle)+'</span><span>'+esc(x.t.site||'—')+'<span class="sub">'+esc(x.t.requestedBy||x.t.name)+'</span></span><span class="why">'+esc(x.why)+'</span></div>';}).join('');
   if(items.length>7)h+='<button class="more" data-more="checks">'+(state.listOpen.checks?'Show fewer':'Show all '+items.length)+'</button>';
   $('checks').innerHTML=h;
 }
@@ -541,11 +560,11 @@ function renderChecks(){
 /* trip log */
 var COLS=[
   {k:'date',l:'Date'},{k:'vehicle',l:'Vehicle'},{k:'site',l:'Site'},{k:'supplier',l:'Supplier'},{k:'from',l:'Collected from'},{k:'to',l:'Delivered to'},
-  {k:'load',l:'Load'},{k:'name',l:'Requested by'},{k:'km',l:'Km',num:1},{k:'craneHrs',l:'Crane hrs',num:1},{k:'bookedHrs',l:'Booked hrs',num:1}
+  {k:'load',l:'Load'},{k:'requestedBy',l:'Requested by'},{k:'name',l:'Booked by'},{k:'km',l:'Km',num:1},{k:'craneHrs',l:'Crane hrs',num:1},{k:'bookedHrs',l:'Booked hrs',num:1}
 ];
 function logRows(){
   var q=normKey(state.search);
-  var rows=view.trips.filter(function(t){if(!q)return true;return [t.site,t.supplier,t.from,t.to,t.name,t.load,veh(t.vehicle).name].some(function(s){return normKey(s).indexOf(q)>=0;});});
+  var rows=view.trips.filter(function(t){if(!q)return true;return [t.site,t.supplier,t.from,t.to,t.requestedBy,t.name,t.load,veh(t.vehicle).name].some(function(s){return normKey(s).indexOf(q)>=0;});});
   var k=state.sortKey,d=state.sortDir;
   rows.sort(function(a,b){var x=a[k],y=b[k];if(k==='vehicle'){x=veh(x).name;y=veh(y).name;}
     if(x==null&&y==null)return 0;if(x==null)return 1;if(y==null)return -1;
@@ -558,7 +577,7 @@ function renderLog(){
   var rows=logRows(),today=todayStr();
   var shown=rows.slice(0,state.logLimit);
   $('log-body').innerHTML=shown.length?shown.map(function(t){
-    return '<tr><td>'+fmtDate(t.date)+'</td><td>'+vtag(t.vehicle)+'</td><td>'+esc(t.site)+'</td><td>'+esc(t.supplier)+'</td><td>'+esc(t.from)+'</td><td>'+esc(t.to)+'</td><td>'+esc(t.load)+'</td><td>'+esc(t.name)+'</td>'
+    return '<tr><td>'+fmtDate(t.date)+'</td><td>'+vtag(t.vehicle)+'</td><td>'+esc(t.site)+'</td><td>'+esc(t.supplier)+'</td><td>'+esc(t.from)+'</td><td>'+esc(t.to)+'</td><td>'+esc(t.load)+'</td><td>'+esc(t.requestedBy)+'</td><td>'+esc(t.name)+'</td>'
       +'<td class="num'+(t.km==null&&t.date<today?' miss':'')+'">'+(t.km==null?(t.date<today?'missing':'—'):fmtN(t.km))+'</td>'
       +'<td class="num">'+(veh(t.vehicle).crane?fmtN(t.craneHrs,1):'')+'</td><td class="num">'+fmtN(t.bookedHrs,1)+'</td></tr>';
   }).join(''):'<tr><td colspan="'+COLS.length+'" class="empty">No trips match.</td></tr>';
@@ -569,8 +588,8 @@ function renderLog(){
   $('log-sub').textContent='Approved trips in the selected period'+(state.search?', filtered':'');
 }
 function downloadCsv(){
-  var rows=logRows(),head=['Date','Vehicle','Site','Supplier','Collected from','Delivered to','Load','Requested by','Start','End','Km','Crane hrs','Booked hrs'];
-  var lines=[head].concat(rows.map(function(t){return [fmtDate(t.date),veh(t.vehicle).name,t.site,t.supplier,t.from,t.to,t.load,t.name,t.time,t.endtime,
+  var rows=logRows(),head=['Date','Vehicle','Site','Supplier','Collected from','Delivered to','Load','Requested by','Booked by','Start','End','Km','Crane hrs','Booked hrs'];
+  var lines=[head].concat(rows.map(function(t){return [fmtDate(t.date),veh(t.vehicle).name,t.site,t.supplier,t.from,t.to,t.load,t.requestedBy,t.name,t.time,t.endtime,
     t.km==null?'':t.km.toFixed(1),t.craneHrs==null?'':t.craneHrs.toFixed(1),t.bookedHrs==null?'':t.bookedHrs.toFixed(2)];}));
   var csv=lines.map(function(r){return r.map(function(c){c=String(c==null?'':c);return /[",\n]/.test(c)?'"'+c.replace(/"/g,'""')+'"':c;}).join(',');}).join('\r\n');
   var blob=new Blob(['\ufeff'+csv],{type:'text/csv;charset=utf-8'}),a=document.createElement('a');
@@ -590,6 +609,7 @@ document.addEventListener('click',function(e){
     state.veh[c.dataset.veh]=!state.veh[c.dataset.veh];buildChips();render();return;}
   var m=e.target.closest('#trend-metric button');if(m){state.trend=m.dataset.m;segPress('trend-metric',m);renderTrend();return;}
   var p=e.target.closest('#places-mode button');if(p){state.places=p.dataset.m;segPress('places-mode',p);renderPlaces();return;}
+  var pm=e.target.closest('#people-mode button');if(pm){state.people=pm.dataset.m;segPress('people-mode',pm);renderPeople();return;}
   var mo=e.target.closest('[data-more]');if(mo){var id=mo.dataset.more;state.listOpen[id]=!state.listOpen[id];render();return;}
   var q=e.target.closest('[data-q]');if(q){setSearch(q.dataset.q);$('log-search').closest('.panel').scrollIntoView({behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth'});return;}
   var th=e.target.closest('th[data-sort]');if(th){sortBy(th.dataset.sort);return;}
@@ -613,9 +633,20 @@ $('btn-lock').addEventListener('click',function(){try{sessionStorage.removeItem(
 
 /* ---------- PIN gate ---------- */
 function unlocked(){try{return sessionStorage.getItem('tyris_dash_ok')==='1';}catch(e){return false;}}
+function sha256(text){
+  return crypto.subtle.digest('SHA-256',new TextEncoder().encode(text)).then(function(buf){
+    return Array.prototype.map.call(new Uint8Array(buf),function(x){return ('0'+x.toString(16)).slice(-2);}).join('');
+  });
+}
 function tryPin(){
-  if($('pin').value===MANAGER_PIN){try{sessionStorage.setItem('tyris_dash_ok','1');}catch(e){}$('gate').style.display='none';start();}
-  else{$('pin-err').textContent='That PIN is not correct. Try again.';$('pin').value='';$('pin').focus();}
+  var code=$('pin').value.trim();$('pin').value='';
+  function no(msg){$('pin-err').textContent=msg;$('pin').focus();}
+  if(!/^\d{4}$/.test(code)){no('Enter your 4-digit approver code.');return;}
+  if(!window.crypto||!crypto.subtle){no('Open the dashboard from its https:// link.');return;}
+  sha256('tyris-vb:'+code).then(function(h){
+    if(MANAGER_CODES.indexOf(h)>=0){try{sessionStorage.setItem('tyris_dash_ok','1');}catch(e){}$('gate').style.display='none';start();}
+    else no('That code isn\'t an approver code. Try again.');
+  });
 }
 $('btn-pin').addEventListener('click',tryPin);
 $('pin').addEventListener('keydown',function(e){if(e.key==='Enter')tryPin();});
@@ -654,7 +685,8 @@ function start(){
 function sampleData(){
   var sites=['The Buzz – Douglasdale','VBS – 82 Wessel Road','Show units – Fourways','Tyris Yard','the buzz – douglasdale'];
   var from=['Builders Warehouse Rivonia','Corobrik Lanseria','Tyris Yard','Cashbuild Randburg','Plant hire – Midrand','Tile depot Kya Sand'];
-  var people=['Johan','Thabo','Gugu','Pieter','Lerato'];
+  var people=['Louw Swanepoel','Marius van Zyl','Zolile Jack','Estie West'];
+  var askers=['Johan','Thabo','Gugu','Pieter','Lerato'];
   var loads=['Materials (Bricks, tiles, etc.)','Container','Plant / Machinery','Other: Scaffolding'];
   var seed=7;function rnd(){seed=(seed*16807)%2147483647;return (seed-1)/2147483646;}
   function pick(a){return a[Math.floor(rnd()*a.length)];}
@@ -666,7 +698,7 @@ function sampleData(){
     var st=7+Math.floor(rnd()*6),len=1+Math.floor(rnd()*5);
     var status=rnd()<.1?'declined':(ds>today&&rnd()<.4?'pending':'approved');
     var km=Math.round(15+rnd()*(v==='bakkie'?90:140)),b={_key:'k'+i,id:i,vehicle:v,site:pick(sites),from:pick(from),to:'',date:ds,time:pad(st)+':00',endtime:pad(Math.min(st+len,18))+':00',
-      loadType:pick(loads),name:pick(people),status:status,submitted:new Date(d.getTime()-864e5*(1+Math.floor(rnd()*6))).toISOString()};
+      loadType:pick(loads),name:pick(people),requestedBy:pick(askers),status:status,submitted:new Date(d.getTime()-864e5*(1+Math.floor(rnd()*6))).toISOString()};
     b.to=b.site;if(b.from!=='Tyris Yard'&&rnd()>.15)b.supplier=b.from.replace(/ Rivonia| Lanseria| Randburg| Kya Sand/,'');
     if(status==='approved'&&ds<today&&rnd()>.08){b.truckStart=String(odo[v]);odo[v]+=km;b.truckEnd=String(odo[v]);b.odoSavedAt='x';
       if(v==='crane'){b.craneStart=String(crane);crane-=Math.round(rnd()*30)/10;b.craneEnd=String(crane.toFixed(1));}}

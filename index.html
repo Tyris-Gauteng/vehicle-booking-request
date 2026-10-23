@@ -165,6 +165,20 @@
   .pin-input{width:100%;padding:12px;text-align:center;letter-spacing:8px;font-size:22px;font-weight:700;border:2px solid var(--border);border-radius:8px;outline:none;font-family:inherit;margin-bottom:14px;}
   .pin-input:focus{border-color:var(--brand-mid);}
   .pin-error{color:var(--danger);font-size:13px;margin-bottom:10px;min-height:18px;}
+  /* Signed-in user */
+  .user-bar{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;background:var(--surface);border:1.5px solid var(--border);border-radius:8px;padding:8px 12px;margin-bottom:14px;font-size:13px;}
+  .user-bar .who{display:flex;align-items:center;gap:8px;min-width:0;}
+  .user-bar .who strong{color:var(--brand);}
+  .role-tag{font-size:11px;font-weight:700;padding:2px 8px;border-radius:999px;background:var(--brand-lite);color:var(--brand);}
+  .role-tag.driver{background:#CCFBF1;color:#0F766E;}
+  .btn-link{background:none;border:none;color:var(--brand-mid);font-weight:600;font-size:13px;cursor:pointer;padding:4px 2px;font-family:inherit;text-decoration:underline;}
+  .gate-note{font-size:13px;color:var(--muted);background:#F8FAFC;border:1px solid var(--border);border-radius:8px;padding:12px;margin-bottom:14px;text-align:left;}
+  .by-line{font-size:12px;color:var(--muted);margin-top:4px;}
+  .by-line strong{color:var(--text);font-weight:600;}
+  .by-line.ok strong{color:#15803D;}
+  .by-line.no strong{color:#B91C1C;}
+  .odo-by{font-size:11px;color:var(--muted);margin-top:8px;}
+  .btn-signin-odo{background:var(--teal);color:#fff;border:none;padding:8px 16px;border-radius:6px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;}
   .admin-header{background:linear-gradient(135deg,var(--brand),var(--brand-mid));color:#fff;border-radius:var(--radius);padding:18px 22px;margin-bottom:16px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;}
   .admin-header h2{font-size:18px;font-weight:700;}
   .admin-header p{font-size:13px;opacity:.8;margin-top:2px;}
@@ -265,11 +279,28 @@
   </nav>
 </header>
 <main>
+  <div class="user-bar" id="user-bar"></div>
   <!-- NEW BOOKING -->
   <div id="view-form" class="view active">
-    <div class="card">
+    <div id="form-gate" class="pin-wrap">
+      <div style="font-size:40px;margin-bottom:12px">🔑</div>
+      <h2>Enter your code</h2>
+      <p>Only approved staff can request a vehicle. Your name is added to the booking from your code.</p>
+      <div class="gate-note" id="form-gate-note" style="display:none"></div>
+      <div id="form-gate-entry">
+        <input type="password" class="pin-input" id="form-code" maxlength="4" placeholder="••••" inputmode="numeric" autocomplete="off" aria-label="Your 4-digit code">
+        <div class="pin-error" id="form-code-error"></div>
+        <button class="btn-primary" style="width:100%" id="btn-form-code">Open booking form</button>
+      </div>
+    </div>
+    <div class="card" id="form-card" style="display:none">
       <div class="card-title-bar"><h1>Vehicle Booking Request</h1><p>Choose a vehicle and complete all required fields. Your booking will be reviewed by an approver.</p></div>
-      <div class="field"><label for="f-name">Your Name <span class="req">*</span></label><input type="text" id="f-name" placeholder="e.g. Jan van der Merwe" maxlength="100" autocomplete="name"></div>
+      <div class="field"><span class="field-label">Booked by</span><div class="gate-note" style="margin:0" id="f-requester"></div></div>
+      <div class="field">
+        <label for="f-reqby">Requested by <span class="req">*</span></label>
+        <input type="text" id="f-reqby" list="reqby-list" placeholder="Who on the project asked for this load?" maxlength="100" autocomplete="off">
+        <div class="sup-hint" id="f-reqby-hint">Names are remembered for next time. Enter your own name if you're requesting it yourself.</div>
+      </div>
       <div class="field">
         <span class="field-label">Vehicle <span class="req">*</span></span>
         <div class="veh-options" id="veh-options" role="radiogroup" aria-label="Vehicle"></div>
@@ -336,7 +367,7 @@
       <div class="stat"><div class="num" id="st-upcoming">0</div><div class="lbl">Upcoming</div></div>
     </div>
     <div class="filters">
-      <input type="text" id="f-search" placeholder="🔍 Search site, supplier or name…">
+      <input type="text" id="f-search" placeholder="🔍 Search site, supplier or person…">
       <select id="f-vehicle" aria-label="Vehicle filter"></select>
       <select id="f-status" aria-label="Status filter"><option value="">All Statuses</option><option value="pending">Pending</option><option value="approved">Approved</option><option value="declined">Declined</option></select>
     </div>
@@ -352,16 +383,19 @@
   <div id="view-admin" class="view">
     <div id="admin-login" class="pin-wrap">
       <div style="font-size:40px;margin-bottom:12px">🔐</div>
-      <h2>Approver Access</h2>
-      <p>Enter your PIN to access the approval panel.</p>
-      <input type="password" class="pin-input" id="pin-input" maxlength="6" placeholder="••••" inputmode="numeric">
-      <div class="pin-error" id="pin-error"></div>
-      <button class="btn-primary" style="width:100%" id="btn-unlock">Unlock</button>
+      <h2>Approver access</h2>
+      <p>Enter your 4-digit code to open the Approvals panel.</p>
+      <div class="gate-note" id="admin-gate-note" style="display:none"></div>
+      <div id="admin-gate-entry">
+        <input type="password" class="pin-input" id="pin-input" maxlength="4" placeholder="••••" inputmode="numeric" autocomplete="off" aria-label="Your 4-digit code">
+        <div class="pin-error" id="pin-error"></div>
+        <button class="btn-primary" style="width:100%" id="btn-unlock">Unlock</button>
+      </div>
     </div>
     <div id="admin-panel" style="display:none">
       <div class="admin-header">
         <div><h2>🛠 Approvals Panel</h2><p>Review and action vehicle booking requests</p></div>
-        <div style="display:flex;gap:8px;flex-wrap:wrap"><a class="btn-logout" href="dashboard.html" style="text-decoration:none">📊 Dashboard</a><button class="btn-logout" id="btn-lock">Lock Panel</button></div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap"><a class="btn-logout" href="dashboard.html" style="text-decoration:none">📊 Dashboard</a><button class="btn-logout" id="btn-lock">Sign out</button></div>
       </div>
       <div class="admin-stats">
         <div class="adm-stat pend"><div class="num" id="adm-pend">0</div><div class="lbl">Pending</div></div>
@@ -392,22 +426,16 @@
 </main>
 
 <datalist id="supplier-list"></datalist>
+<datalist id="reqby-list"></datalist>
 
 <!-- EDIT MODAL -->
 <div class="modal-overlay hidden" id="edit-modal">
   <div class="modal" role="dialog" aria-modal="true" aria-labelledby="edit-modal-title">
     <h2 id="edit-modal-title">Edit Booking</h2>
-    <p id="edit-modal-desc">Confirm your name to edit this pending booking.</p>
-    <div id="edit-name-verify" style="display:none">
-      <div class="field"><label for="edit-verify-name">Confirm your name <span class="req">*</span></label><input type="text" id="edit-verify-name" placeholder="Enter your name exactly as submitted..."></div>
-      <div style="color:var(--danger);font-size:13px;min-height:18px" id="edit-verify-error"></div>
-      <div class="modal-actions">
-        <button class="btn-primary" id="btn-verify">Continue</button>
-        <button class="btn-ghost" data-act="close-modal">Cancel</button>
-      </div>
-    </div>
+    <p id="edit-modal-desc"></p>
     <div id="edit-form-fields" style="display:none">
       <div class="field"><label for="e-vehicle">Vehicle <span class="req">*</span></label><select id="e-vehicle"></select></div>
+      <div class="field"><label for="e-reqby">Requested by <span class="req">*</span></label><input type="text" id="e-reqby" list="reqby-list" maxlength="100" autocomplete="off" placeholder="Who on the project asked for this load?"></div>
       <div class="field"><label for="e-site">Site Name / Location <span class="req">*</span></label><input type="text" id="e-site" maxlength="120"></div>
       <div class="field">
         <label for="e-supplier">Supplier</label>
@@ -445,6 +473,19 @@
     </div>
   </div>
 </div>
+<!-- SIGN-IN MODAL -->
+<div class="modal-overlay hidden" id="signin-modal">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="signin-title" style="max-width:380px;text-align:center">
+    <h2 id="signin-title">Enter your code</h2>
+    <p id="signin-desc"></p>
+    <input type="password" class="pin-input" id="signin-code" maxlength="4" placeholder="••••" inputmode="numeric" autocomplete="off" aria-label="Your 4-digit code">
+    <div class="pin-error" id="signin-error"></div>
+    <div class="modal-actions" style="justify-content:center">
+      <button class="btn-primary" id="btn-signin">Continue</button>
+      <button class="btn-ghost" data-act="close-signin">Cancel</button>
+    </div>
+  </div>
+</div>
 <div id="toast" role="status" aria-live="polite"></div>
 
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
@@ -470,14 +511,36 @@ var VEHICLES=[
 var firebaseConfig={apiKey:"AIzaSyD68zIJdJcaAjqmCEnd_f4wlr8O_7vO38M",authDomain:"tyris-crane-booking.firebaseapp.com",databaseURL:"https://tyris-crane-booking-default-rtdb.europe-west1.firebasedatabase.app",projectId:"tyris-crane-booking",storageBucket:"tyris-crane-booking.firebasestorage.app",messagingSenderId:"557970814071",appId:"1:557970814071:web:6e886e2cba940c61fcc272"};
 var DB_PATH='vehicleBookings';
 var SUPPLIERS_PATH='vehicleSuppliers';   // saved supplier pick list
-var ADMIN_PIN='5005';
-var DRIVER_PIN='6512';
+/* ================================================================
+   PEOPLE & CODES
+   Each person signs in with their own 4-digit code, and their name is
+   recorded on everything they do (bookings, approvals, readings, edits).
+     admin  : can request bookings, approve/decline, edit, enter readings
+     driver : can only enter and edit odometer / crane hour readings
+   Codes are stored as fingerprints (SHA-256 of 'tyris-vb:' + code), so
+   they don't appear in the page source as plain numbers. To add or
+   change someone, ask Claude for a new line, or use any SHA-256 tool on
+   the text tyris-vb:1234 (with their code in place of 1234).
+   ================================================================ */
+var USERS=[
+  {name:'Marius van Zyl',  role:'admin',  h:'6edc2212cd3a331df165206bb9215001197e0ab9510f5ce0c4f84fcc5a181e62'},
+  {name:'Stephan Snyman',  role:'admin',  h:'5745bc95e9875e37a28aba44c6f17c8ca99d054bff3fcb293cb9ac20e315807d'},
+  {name:'Wim Malan',       role:'admin',  h:'35c4713b1d949ce4b05c67eecccaa9c62abcc0350ad75d46e7568feda2aceb07'},
+  {name:'Chris du Toit',   role:'admin',  h:'6806a9f24206bb6bb54cfe1bd2a6d76070dfb9b1748c674250c9d595afc1b26b'},
+  {name:'Zolile Jack',     role:'admin',  h:'19f9cb9a973f81f2d012ed891629542f6ad1e420599967c88a6056e8b843b501'},
+  {name:'Louw Swanepoel',  role:'admin',  h:'0fc4ca6898c0005c07fccb8de2b20a5906294d48f25712cfedb316aaf1503ab6'},
+  {name:'Estie West',      role:'admin',  h:'dc57d2bdf7c3ff19ef2ae3d2993837ae453447ad5af57034e72f185329fa7b7d'},
+  {name:'Jonas Mokwele',   role:'driver', h:'509506a46d16a1cde8feffe605e4d06a193fcb76f1456190373d91ce205d3fbd'},
+  {name:'Lucky Makhobele', role:'driver', h:'5235c6f80a12f441f65eee495c7155fba22e1c1a52e7a81719d81880c6a18a7d'}
+];
+var IDLE_MINUTES=30;     // signed out automatically after this long with no activity
+var SESSION_KEY='tyris_vb_user';
+var currentUser=null;    // {name, role}
 
 var allBookings=[];
 var adminUnlocked=false;
 var bookingsRef=null;
 var dataLoaded=false;
-var odoUnlocked={};      // booking keys where the driver PIN was entered
 var declineOpen={};      // booking keys with the decline reason box open
 var odoEditOpen={};      // booking keys with the readings edit box open
 var calVehFilter='';
@@ -517,6 +580,119 @@ function findOverlap(vehicleId,date,start,end,excludeKey,status){
   return null;
 }
 function checkClash(vehicleId,date,start,end,excludeKey){return findOverlap(vehicleId,date,start,end,excludeKey,'approved');}
+
+/* ---------- sign-in (codes) ---------- */
+function isAdmin(){return !!currentUser&&currentUser.role==='admin';}
+function whoName(){return currentUser?currentUser.name:'';}
+function roleLabel(r){return r==='driver'?'Driver':'Approver';}
+function sha256(text){
+  if(!window.crypto||!crypto.subtle)return Promise.reject(new Error('Secure connection needed'));
+  return crypto.subtle.digest('SHA-256',new TextEncoder().encode(text)).then(function(buf){
+    return Array.prototype.map.call(new Uint8Array(buf),function(x){return ('0'+x.toString(16)).slice(-2);}).join('');
+  });
+}
+function findUserByCode(code){
+  code=String(code||'').trim();
+  if(!/^\d{4}$/.test(code))return Promise.resolve(null);
+  return sha256('tyris-vb:'+code).then(function(h){
+    for(var i=0;i<USERS.length;i++){if(USERS[i].h===h)return {name:USERS[i].name,role:USERS[i].role};}
+    return null;
+  });
+}
+function saveSession(){
+  try{
+    if(currentUser)sessionStorage.setItem(SESSION_KEY,JSON.stringify({name:currentUser.name,role:currentUser.role,t:Date.now()}));
+    else sessionStorage.removeItem(SESSION_KEY);
+    if(isAdmin())sessionStorage.setItem('tyris_dash_ok','1');else sessionStorage.removeItem('tyris_dash_ok');
+  }catch(e){}
+}
+function loadSession(){
+  try{
+    var u=JSON.parse(sessionStorage.getItem(SESSION_KEY)||'null');
+    if(u&&u.name&&(Date.now()-(u.t||0))<IDLE_MINUTES*60000){
+      for(var i=0;i<USERS.length;i++){if(USERS[i].name===u.name&&USERS[i].role===u.role){currentUser={name:u.name,role:u.role};return;}}
+    }
+  }catch(e){}
+  currentUser=null;saveSession();
+}
+function setUser(u){
+  currentUser=u;adminUnlocked=isAdmin();saveSession();
+  if(u)showToast('Signed in as '+u.name+'.','#1B4FA8');
+  refreshAccess();renderAll();
+}
+function signOut(quiet){
+  currentUser=null;adminUnlocked=false;odoEditOpen={};declineOpen={};saveSession();
+  closeEditModal();closeSignin();
+  refreshAccess();renderAll();
+  if(!quiet)showToast('Signed out.','#6B7280');
+}
+/* activity keeps the session alive; idle sessions sign out */
+var lastActive=Date.now();
+['click','keydown','touchstart'].forEach(function(ev){document.addEventListener(ev,function(){lastActive=Date.now();if(currentUser)saveSession();},true);});
+setInterval(function(){if(currentUser&&Date.now()-lastActive>IDLE_MINUTES*60000){signOut(true);showToast('Signed out after '+IDLE_MINUTES+' minutes of no activity.','#6B7280');}},30000);
+
+/* Show/hide the booking form and Approvals panel for the signed-in person */
+function refreshAccess(){
+  var bar=$('user-bar');
+  if(currentUser)bar.innerHTML='<div class="who">👤 <strong>'+esc(currentUser.name)+'</strong><span class="role-tag'+(currentUser.role==='driver'?' driver':'')+'">'+roleLabel(currentUser.role)+'</span></div><button class="btn-link" data-act="signout">Sign out</button>';
+  else bar.innerHTML='<div class="who">Not signed in</div><button class="btn-link" data-act="signin">Sign in with your code</button>';
+  // booking form
+  var canBook=isAdmin();
+  $('form-card').style.display=canBook?'block':'none';
+  $('form-gate').style.display=canBook?'none':'block';
+  if(canBook)$('f-requester').innerHTML='<strong>'+esc(currentUser.name)+'</strong>';
+  var fn=$('form-gate-note');
+  if(currentUser&&!canBook){fn.style.display='block';fn.innerHTML='You\'re signed in as <strong>'+esc(currentUser.name)+'</strong> (driver). Drivers can enter and edit readings under Submissions, but can\'t request bookings. Sign out to let an approver book.';$('form-gate-entry').style.display='none';}
+  else{fn.style.display='none';$('form-gate-entry').style.display='block';}
+  // approvals
+  $('admin-login').style.display=adminUnlocked?'none':'block';
+  $('admin-panel').style.display=adminUnlocked?'block':'none';
+  var an=$('admin-gate-note');
+  if(currentUser&&!adminUnlocked){an.style.display='block';an.innerHTML='You\'re signed in as <strong>'+esc(currentUser.name)+'</strong> (driver). The Approvals panel is for approvers only.';$('admin-gate-entry').style.display='none';}
+  else{an.style.display='none';$('admin-gate-entry').style.display='block';}
+}
+/* Code box on a page (booking form or Approvals) */
+function gateSignIn(inputId,errId,needAdmin){
+  var inp=$(inputId),errEl=$(errId);
+  findUserByCode(inp.value).then(function(u){
+    inp.value='';
+    if(!u){errEl.textContent='That code wasn\'t recognised. Check it and try again.';inp.focus();return;}
+    if(needAdmin&&u.role!=='admin'){errEl.textContent='That\'s a driver code. Only approvers can use this section.';inp.focus();return;}
+    errEl.textContent='';setUser(u);
+  }).catch(function(){errEl.textContent='Your browser blocked the code check. Open the app from its https:// link.';});
+}
+/* Sign-in pop-up: run an action once the right person is signed in */
+var signinNext=null,signinNeedAdmin=false;
+function requireUser(needAdmin,why,next){
+  if(currentUser&&(!needAdmin||isAdmin())){next();return;}
+  signinNext=next;signinNeedAdmin=!!needAdmin;
+  $('signin-title').textContent=currentUser?'Approver code needed':'Enter your code';
+  $('signin-desc').textContent=why||'';
+  $('signin-error').textContent='';$('signin-code').value='';
+  $('signin-modal').classList.remove('hidden');
+  setTimeout(function(){$('signin-code').focus();},50);
+}
+function closeSignin(){$('signin-modal').classList.add('hidden');signinNext=null;}
+function submitSignin(){
+  var inp=$('signin-code');
+  findUserByCode(inp.value).then(function(u){
+    inp.value='';
+    if(!u){$('signin-error').textContent='That code wasn\'t recognised. Try again.';inp.focus();return;}
+    if(signinNeedAdmin&&u.role!=='admin'){$('signin-error').textContent='This needs an approver code. Drivers can only enter readings.';inp.focus();return;}
+    var next=signinNext;$('signin-modal').classList.add('hidden');signinNext=null;
+    setUser(u);if(next)next();
+  }).catch(function(){$('signin-error').textContent='Your browser blocked the code check. Open the app from its https:// link.';});
+}
+/* "by" lines shown on cards */
+function decisionLine(b){
+  if(b.status==='approved'||b.status==='declined'){
+    var ok=b.status==='approved';
+    if(!b.decidedBy&&!b.approvedAt)return '';
+    return '<div class="by-line '+(ok?'ok':'no')+'">'+(ok?'✅ Approved':'❌ Declined')+(b.decidedBy?' by <strong>'+esc(b.decidedBy)+'</strong>':'')+(b.approvedAt?' · '+fmtStamp(b.approvedAt):'')+'</div>';
+  }
+  return '';
+}
+function editedLine(b){return b.editedBy?'<div class="by-line">✏️ Last edited by <strong>'+esc(b.editedBy)+'</strong>'+(b.editedAt?' · '+fmtStamp(b.editedAt):'')+'</div>':'';}
 
 /* ---------- database ---------- */
 function showDbError(msg){var l=$('loading');l.classList.add('error');l.style.display='flex';$('loading-msg').innerHTML=msg;}
@@ -590,12 +766,33 @@ function saveSupplier(name,by){
 function addSupplierAdmin(){
   var v=cleanName($('sup-new').value);if(!v)return;
   if(findSupplier(v)){showToast(v+' is already on the list.','#6B7280');return;}
-  saveSupplier(v,'Approver').then(function(){$('sup-new').value='';});
+  saveSupplier(v,whoName()||'Approver').then(function(){$('sup-new').value='';});
 }
 function removeSupplier(key){
   var s=null;suppliers.forEach(function(x){if(x.key===key)s=x;});if(!s)return;
   if(!confirm('Remove "'+s.name+'" from the supplier list?\n\nPast bookings keep the supplier name.'))return;
   suppliersRef.child(key).remove().then(function(){showToast('Supplier removed from the list.','#6B7280');}).catch(fail);
+}
+
+/* ---------- remembered "Requested by" names ----------
+   Built from the names on past bookings, so nothing extra is stored.
+   Same name typed in different case uses the most recent spelling. */
+var requesters=[];
+function buildRequesters(){
+  var seen={},list=[];
+  allBookings.slice().sort(function(a,b){return b.id-a.id;}).forEach(function(b){
+    var n=cleanName(b.requestedBy),k=supKey(n);if(!k||seen[k])return;seen[k]=1;list.push(n);
+  });
+  list.sort(function(a,b){return a.localeCompare(b);});
+  requesters=list;
+  $('reqby-list').innerHTML=list.map(function(n){return '<option value="'+esc(n)+'"></option>';}).join('');
+  $('f-reqby-hint').textContent=list.length?'Pick from '+list.length+' remembered name'+(list.length===1?'':'s')+', or type a new one. Enter your own name if you\'re requesting it yourself.':'Names are remembered for next time. Enter your own name if you\'re requesting it yourself.';
+}
+function canonicalRequester(v){var k=supKey(v);for(var i=0;i<requesters.length;i++){if(supKey(requesters[i])===k)return requesters[i];}return cleanName(v);}
+function requestLine(b,small){
+  var h='';
+  if(b.requestedBy)h+='<div class="by-line">🙋 Requested by <strong>'+esc(b.requestedBy)+'</strong></div>';
+  return h;
 }
 
 /* Re-render without wiping something a person is busy typing */
@@ -604,6 +801,7 @@ function isTypingInList(){var a=document.activeElement;return a&&(a.tagName==='I
 function requestRender(){if(isTypingInList()){renderPending=true;return;}renderAll();}
 document.addEventListener('focusout',function(){if(renderPending){setTimeout(function(){if(renderPending&&!isTypingInList()){renderPending=false;renderAll();}},350);}});
 function renderAll(){
+  buildRequesters();
   renderList();
   if($('view-calendar').classList.contains('active'))renderCalendar();
   if(adminUnlocked)renderAdmin();
@@ -688,10 +886,11 @@ function setFormError(msg,invalidIds){
 }
 function submitForm(){
   if(!bookingsRef){alert('The booking database is not connected. Please refresh the page.');return;}
-  var f={name:$('f-name').value.trim(),vehicle:radioVal('vehicle'),site:$('f-site').value.trim(),supplier:canonicalSupplier($('f-supplier').value),from:$('f-from').value.trim(),to:$('f-to').value.trim(),date:$('f-date').value,time:$('f-time').value,endtime:$('f-endtime').value,load:radioVal('loadtype'),notes:$('f-notes').value.trim()};
+  if(!isAdmin()){refreshAccess();showToast('Please enter your code to request a booking.','#DC2626');return;}
+  var f={name:currentUser.name,requestedBy:canonicalRequester($('f-reqby').value),vehicle:radioVal('vehicle'),site:$('f-site').value.trim(),supplier:canonicalSupplier($('f-supplier').value),from:$('f-from').value.trim(),to:$('f-to').value.trim(),date:$('f-date').value,time:$('f-time').value,endtime:$('f-endtime').value,load:radioVal('loadtype'),notes:$('f-notes').value.trim()};
   var errs=[],bad=[];
   function need(ok,label,id){if(!ok){errs.push(label);bad.push(id);}}
-  need(f.name,'Your Name','f-name');need(f.vehicle,'Vehicle','veh-options');need(f.site,'Site Name / Location','f-site');
+  need(f.requestedBy,'Requested by','f-reqby');need(f.vehicle,'Vehicle','veh-options');need(f.site,'Site Name / Location','f-site');
   need(f.from,'From','f-from');need(f.to,'To','f-to');need(f.date,'Requested Date','f-date');
   need(f.time,'Start Time','f-time');need(f.endtime,'End Time','f-endtime');need(f.load,'Load Type','load-options');
   if(errs.length){setFormError('<strong>Please complete:</strong> '+errs.map(esc).join(', '),bad);return;}
@@ -701,14 +900,14 @@ function submitForm(){
   setFormError('');
   var loadType=f.load;
   if(loadType==='Other'){var ot=$('load-other-text').value.trim();loadType=ot?'Other: '+ot:'Other';}
-  var booking={id:Date.now(),vehicle:f.vehicle,name:f.name,site:f.site,supplier:f.supplier,from:f.from,to:f.to,date:f.date,time:f.time,endtime:f.endtime,loadType:loadType,notes:f.notes,status:'pending',reason:'',approvedAt:'',completedAt:'',truckStart:'',truckEnd:'',craneStart:'',craneEnd:'',odoSavedAt:'',submitted:new Date().toISOString()};
+  var booking={id:Date.now(),vehicle:f.vehicle,name:f.name,requestedBy:f.requestedBy,site:f.site,supplier:f.supplier,from:f.from,to:f.to,date:f.date,time:f.time,endtime:f.endtime,loadType:loadType,notes:f.notes,status:'pending',reason:'',approvedAt:'',completedAt:'',truckStart:'',truckEnd:'',craneStart:'',craneEnd:'',odoSavedAt:'',decidedBy:'',submitted:new Date().toISOString()};
   var btn=$('btn-submit');btn.disabled=true;
   var saveSup=$('f-sup-save-chk').checked&&f.supplier;
   bookingsRef.push(booking).then(function(){btn.disabled=false;showToast('✓ '+veh(f.vehicle).name+' booking submitted! Awaiting approval.','#1B4FA8');if(saveSup)setTimeout(function(){saveSupplier(f.supplier,f.name);},1200);clearForm();})
     .catch(function(e){btn.disabled=false;fail(e);});
 }
 function clearForm(){
-  ['f-name','f-site','f-supplier','f-from','f-to','f-date','f-time','f-endtime','f-notes','load-other-text'].forEach(function(id){$(id).value='';});
+  ['f-reqby','f-site','f-supplier','f-from','f-to','f-date','f-time','f-endtime','f-notes','load-other-text'].forEach(function(id){$(id).value='';});
   document.querySelectorAll('input[name="loadtype"],input[name="vehicle"]').forEach(function(r){r.checked=false;});
   $('f-sup-save-chk').checked=false;syncSupSave('f');
   syncChecked();setFormError('');updateFormHints();
@@ -725,10 +924,10 @@ function readingsInputs(b,crane){
   if(crane)h+='<div class="odo-hint">Crane hours count down to the next service.</div>';
   return h;
 }
-function readingsDisplay(b,admin){
+function readingsDisplay(b){
   var v=veh(b.vehicle),k=b._key;
   function kv(label,val,style){return '<div class="odo-row"><span class="odo-label">'+label+'</span><span class="odo-val"'+(style?' style="'+style+'"':'')+'>'+val+'</span></div>';}
-  var h='<div class="odo-readings-display"><div class="odo-head"><span>'+(v.crane?'Odometer / Crane Hours':'Odometer Readings')+'</span>'+(admin?'<button class="btn-mini" data-act="odo-edit" data-key="'+k+'">✏️ Edit</button>':'')+'</div><div class="odo-kv">';
+  var h='<div class="odo-readings-display"><div class="odo-head"><span>'+(v.crane?'Odometer / Crane Hours':'Odometer Readings')+'</span>'+'<button class="btn-mini" data-act="odo-edit" data-key="'+k+'">✏️ Edit</button></div><div class="odo-kv">';
   h+=kv('Odometer Start',esc(b.truckStart||'—')+' km')+kv('Odometer End',esc(b.truckEnd||'—')+' km');
   var ts=num(b.truckStart),te=num(b.truckEnd);
   if(ts!==null&&te!==null)h+=kv('Distance',(te-ts).toFixed(1)+' km')+'<div></div>';
@@ -742,16 +941,17 @@ function readingsDisplay(b,admin){
     }
   }
   h+='</div>';
-  if(admin){
+  if(b.odoSavedBy||b.odoEditedBy)h+='<div class="odo-by">'+(b.odoSavedBy?'Captured by <strong>'+esc(b.odoSavedBy)+'</strong>':'')+(b.odoSavedBy&&b.odoEditedBy?' · ':'')+(b.odoEditedBy?'Last edited by <strong>'+esc(b.odoEditedBy)+'</strong>'+(b.odoEditedAt?' ('+fmtStamp(b.odoEditedAt)+')':''):'')+'</div>';
+  if(currentUser){
     h+='<div class="odo-edit-box" style="display:'+(odoEditOpen[k]?'block':'none')+';margin-top:10px;background:#fff;border:1.5px solid #BBF7D0;border-radius:8px;padding:12px">'+readingsInputs(b,v.crane)
       +'<div style="display:flex;gap:8px"><button class="btn-complete" data-act="odo-save-edit" data-key="'+k+'">Save</button><button class="btn-reset" data-act="odo-cancel" data-key="'+k+'">Cancel</button></div></div>';
   }
   return h+'</div>';
 }
 function readingsEntry(b){
-  var v=veh(b.vehicle),k=b._key,open=!!odoUnlocked[k];
+  var v=veh(b.vehicle),k=b._key,open=!!currentUser;
   var h='<div class="odo-unlock"><div style="font-size:12px;font-weight:600;color:var(--muted);margin-bottom:6px">Enter '+(v.crane?'Odometer / Crane Hour':'Odometer')+' Readings</div>';
-  if(!open)h+='<div class="odo-unlock-row"><input type="password" class="odo-pin-input" maxlength="6" placeholder="PIN" inputmode="numeric" aria-label="Driver PIN" data-enter="odo-unlock" data-key="'+k+'"><button class="btn-odo-unlock" data-act="odo-unlock" data-key="'+k+'">Unlock</button><span style="font-size:11px;color:var(--muted)">(Driver PIN required)</span></div>';
+  if(!open)h+='<div class="odo-unlock-row"><button class="btn-signin-odo" data-act="odo-signin" data-key="'+k+'">🔑 Enter readings</button><span style="font-size:11px;color:var(--muted)">Driver or approver code needed</span></div>';
   h+='<div class="odo-fields'+(open?' visible':'')+'">'+readingsInputs(null,v.crane)+'<button class="btn-complete" data-act="odo-save" data-key="'+k+'" style="width:100%">Save Readings</button></div></div>';
   return h;
 }
@@ -771,7 +971,7 @@ function listFiltered(){
   var out=allBookings.filter(function(b){
     if(sf&&b.status!==sf)return false;
     if(vf&&b.vehicle!==vf)return false;
-    if(search&&[b.site,b.name,b.supplier].every(function(x){return String(x||'').toLowerCase().indexOf(search)<0;}))return false;
+    if(search&&[b.site,b.name,b.requestedBy,b.supplier].every(function(x){return String(x||'').toLowerCase().indexOf(search)<0;}))return false;
     return true;
   });
   out.sort(function(a,b){return String(b.date).localeCompare(String(a.date))||b.id-a.id;});
@@ -798,12 +998,12 @@ function renderList(){
     html+='<div class="bc-meta">'+vehChip(b.vehicle)+'<span class="tag time">🕐 '+fmtTime(b.time)+' – '+fmtTime(b.endtime)+'</span><span class="tag load">📦 '+esc(b.loadType)+'</span>'+badge(b.status)+'</div>';
     if(b.notes)html+='<div class="bc-notes">"'+esc(b.notes)+'"</div>';
     if(b.status==='declined'&&b.reason)html+='<div class="bc-reason">❌ Reason: '+esc(b.reason)+'</div>';
-    html+='<div class="bc-submitter">Submitted by '+esc(b.name)+' · '+fmtStamp(b.submitted)+'</div>';
+    html+='<div class="bc-submitter">'+requestLine(b)+'<div>Booked by <strong>'+esc(b.name)+'</strong> · '+fmtStamp(b.submitted)+'</div></div>'+decisionLine(b)+editedLine(b);
     if(b.status==='pending')html+='<div style="margin-top:10px"><button class="btn-ghost" style="padding:7px 16px;font-size:13px" data-act="edit" data-key="'+k+'">Edit Booking</button></div>';
     if(b.status==='approved'){
-      if(b.completedAt)html+='<div style="margin-top:10px"><span class="completed-stamp">🏁 Completed · '+fmtStamp(b.completedAt)+'</span></div>';
+      if(b.completedAt)html+='<div style="margin-top:10px"><span class="completed-stamp">🏁 Completed'+(b.completedBy?' by '+esc(b.completedBy):'')+' · '+fmtStamp(b.completedAt)+'</span></div>';
       else html+='<div style="margin-top:10px"><button class="btn-complete" data-act="complete" data-key="'+k+'">🏁 Mark as Complete</button></div>';
-      html+=b.odoSavedAt?readingsDisplay(b,false):readingsEntry(b);
+      html+=b.odoSavedAt?readingsDisplay(b):readingsEntry(b);
     }
     html+='</div>';
   });
@@ -811,10 +1011,10 @@ function renderList(){
 }
 
 /* ---------- exports ---------- */
-var EXPORT_HEADERS=['Submitted','Vehicle','Date','Start Time','End Time','Site','Supplier','From','To','Load Type','Notes','Status','Decline Reason','Completed At','Odometer Start (km)','Odometer End (km)','Distance (km)','Crane Start (hrs)','Crane End (hrs)','Crane Hours Used','Submitted By'];
+var EXPORT_HEADERS=['Submitted','Vehicle','Date','Start Time','End Time','Site','Supplier','From','To','Load Type','Notes','Status','Decline Reason','Completed At','Odometer Start (km)','Odometer End (km)','Distance (km)','Crane Start (hrs)','Crane End (hrs)','Crane Hours Used','Requested By','Booked By','Approved / Declined By','Decision Date','Completed By','Readings Captured By','Readings Edited By','Last Edited By'];
 function exportRow(b){
   var ts=num(b.truckStart),te=num(b.truckEnd),cs=num(b.craneStart),ce=num(b.craneEnd);
-  return [fmtStamp(b.submitted),veh(b.vehicle).name,fmtDate(b.date),fmtTime(b.time),fmtTime(b.endtime),b.site||'',b.supplier||'',b.from||'',b.to||'',b.loadType||'',b.notes||'',b.status||'',b.reason||'',fmtStamp(b.completedAt),b.truckStart||'',b.truckEnd||'',ts!==null&&te!==null?(te-ts).toFixed(1):'',b.craneStart||'',b.craneEnd||'',cs!==null&&ce!==null?(cs-ce).toFixed(1):'',b.name||''];
+  return [fmtStamp(b.submitted),veh(b.vehicle).name,fmtDate(b.date),fmtTime(b.time),fmtTime(b.endtime),b.site||'',b.supplier||'',b.from||'',b.to||'',b.loadType||'',b.notes||'',b.status||'',b.reason||'',fmtStamp(b.completedAt),b.truckStart||'',b.truckEnd||'',ts!==null&&te!==null?(te-ts).toFixed(1):'',b.craneStart||'',b.craneEnd||'',cs!==null&&ce!==null?(cs-ce).toFixed(1):'',b.requestedBy||'',b.name||'',b.decidedBy||'',fmtStamp(b.approvedAt),b.completedBy||'',b.odoSavedBy||'',b.odoEditedBy||'',b.editedBy||''];
 }
 function download(content,type,filename){
   var blob=new Blob([content],{type:type});var url=URL.createObjectURL(blob);
@@ -838,12 +1038,9 @@ function exportExcel(){
 }
 
 /* ---------- approvals ---------- */
-function checkPin(){
-  if($('pin-input').value===ADMIN_PIN){adminUnlocked=true;try{sessionStorage.setItem('tyris_dash_ok','1');}catch(e){}$('admin-login').style.display='none';$('admin-panel').style.display='block';$('pin-input').value='';renderAdmin();}
-  else{$('pin-error').textContent='Incorrect PIN. Please try again.';$('pin-input').value='';}
-}
-function adminLogout(){adminUnlocked=false;$('admin-panel').style.display='none';$('admin-login').style.display='block';$('pin-input').value='';}
-function renderAdminView(){if(!adminUnlocked){$('admin-panel').style.display='none';$('admin-login').style.display='block';}else renderAdmin();}
+function checkPin(){gateSignIn('pin-input','pin-error',true);}
+function adminLogout(){signOut();}
+function renderAdminView(){refreshAccess();if(adminUnlocked)renderAdmin();}
 function renderAdmin(){
   var search=$('adm-search').value.toLowerCase(),sf=$('adm-status').value,vf=$('adm-vehicle').value;
   $('adm-pend').textContent=allBookings.filter(function(b){return b.status==='pending';}).length;
@@ -852,7 +1049,7 @@ function renderAdmin(){
   var rows=allBookings.filter(function(b){
     if(sf&&b.status!==sf)return false;
     if(vf&&b.vehicle!==vf)return false;
-    if(search&&[b.site,b.name,b.supplier].every(function(x){return String(x||'').toLowerCase().indexOf(search)<0;}))return false;
+    if(search&&[b.site,b.name,b.requestedBy,b.supplier].every(function(x){return String(x||'').toLowerCase().indexOf(search)<0;}))return false;
     return true;
   });
   rows.sort(function(a,b){return String(a.date).localeCompare(String(b.date))||byTime(a,b);});
@@ -870,8 +1067,8 @@ function renderAdmin(){
     if(isPending){var c=checkClash(b.vehicle,b.date,b.time,b.endtime,k);if(c)html+='<div class="clash-warning block" style="display:block;margin:8px 0 0">⚠️ Clashes with an approved '+esc(v.name)+' booking: '+esc(c.site)+', '+fmtTime(c.time)+' – '+fmtTime(c.endtime)+'</div>';}
     if(b.notes)html+='<div class="ac-notes">"'+esc(b.notes)+'"</div>';
     if(b.status==='declined'&&b.reason)html+='<div class="ac-notes" style="color:#991B1B">Reason: '+esc(b.reason)+'</div>';
-    if(b.completedAt)html+='<div style="margin-top:6px"><span class="completed-stamp">🏁 Completed · '+fmtStamp(b.completedAt)+'</span></div>';
-    html+='<div class="ac-by">Submitted by '+esc(b.name)+' · '+fmtStamp(b.submitted)+'</div>';
+    if(b.completedAt)html+='<div style="margin-top:6px"><span class="completed-stamp">🏁 Completed'+(b.completedBy?' by '+esc(b.completedBy):'')+' · '+fmtStamp(b.completedAt)+'</span></div>';
+    html+='<div class="ac-by">'+requestLine(b)+'<div>Booked by <strong>'+esc(b.name)+'</strong> · '+fmtStamp(b.submitted)+'</div></div>'+decisionLine(b)+editedLine(b);
     html+='<div class="status-change-row"><label for="status-sel-'+k+'">Change status:</label><select class="status-select" id="status-sel-'+k+'">'
       +['pending','approved','declined'].map(function(s){return '<option value="'+s+'"'+(b.status===s?' selected':'')+'>'+s.charAt(0).toUpperCase()+s.slice(1)+'</option>';}).join('')
       +'</select><button class="btn-status-save" data-act="status-apply" data-key="'+k+'">Apply</button></div>';
@@ -881,7 +1078,7 @@ function renderAdmin(){
     html+='<button class="btn-reset" data-act="admin-edit" data-key="'+k+'">✏️ Edit</button>';
     html+='<button class="btn-reset" style="margin-left:auto;color:#DC2626" data-act="delete" data-key="'+k+'">🗑 Delete</button></div>';
     if(isPending)html+='<div class="reason-wrap'+(declineOpen[k]?' visible':'')+'" id="reason-wrap-'+k+'"><input type="text" class="reason-input" id="reason-'+k+'" placeholder="Optional: reason for declining…"><button class="btn-decline" style="width:100%;margin-top:8px" data-act="decline-confirm" data-key="'+k+'">Confirm Decline</button></div>';
-    if(b.status==='approved')html+=b.odoSavedAt?readingsDisplay(b,true):readingsEntry(b);
+    if(b.status==='approved')html+=b.odoSavedAt?readingsDisplay(b):readingsEntry(b);
     html+='</div>';
   });
   el.innerHTML=html;
@@ -890,52 +1087,50 @@ function approveBooking(key){
   var b=findBooking(key);if(!b)return;
   var c=checkClash(b.vehicle,b.date,b.time,b.endtime,key);
   if(c&&!confirm('⚠️ Clash detected!\n\nThe '+veh(b.vehicle).name+' is already approved for:\n• '+c.site+' from '+fmtTime(c.time)+' to '+fmtTime(c.endtime)+'\n\nApprove anyway?'))return;
-  updateBooking(key,{status:'approved',reason:'',approvedAt:new Date().toISOString()}).then(function(){showToast('✅ Booking approved!','#16A34A');}).catch(fail);
+  if(!isAdmin())return;
+  updateBooking(key,{status:'approved',reason:'',approvedAt:new Date().toISOString(),decidedBy:whoName()}).then(function(){showToast('✅ Booking approved!','#16A34A');}).catch(fail);
 }
 function declineBooking(key){
   var inp=$('reason-'+key);var reason=inp?inp.value.trim():'';
   delete declineOpen[key];
-  updateBooking(key,{status:'declined',reason:reason,approvedAt:new Date().toISOString()}).then(function(){showToast('❌ Booking declined.','#DC2626');}).catch(fail);
+  if(!isAdmin())return;
+  updateBooking(key,{status:'declined',reason:reason,approvedAt:new Date().toISOString(),decidedBy:whoName()}).then(function(){showToast('❌ Booking declined.','#DC2626');}).catch(fail);
 }
 function changeStatus(key,s){
   var b=findBooking(key);if(!b)return;
   if(s===b.status){showToast('Status is already '+s+'.','#6B7280');return;}
   if(s==='approved'){var c=checkClash(b.vehicle,b.date,b.time,b.endtime,key);if(c&&!confirm('⚠️ The '+veh(b.vehicle).name+' is already approved for '+c.site+' from '+fmtTime(c.time)+' to '+fmtTime(c.endtime)+'.\n\nApprove anyway?'))return;}
-  var u={status:s,approvedAt:s==='pending'?'':new Date().toISOString()};if(s!=='declined')u.reason='';
+  if(!isAdmin())return;
+  var u={status:s,approvedAt:s==='pending'?'':new Date().toISOString(),decidedBy:s==='pending'?'':whoName()};if(s!=='declined')u.reason='';
   updateBooking(key,u).then(function(){showToast('Status changed to '+s.charAt(0).toUpperCase()+s.slice(1)+'!',s==='approved'?'#16A34A':s==='declined'?'#DC2626':'#D97706');}).catch(fail);
 }
 
 /* ---------- edit modal ---------- */
 var editIsAdmin=false,editCurrentKey=null;
 function openEditModal(key,asAdmin){
-  var b=findBooking(key);if(!b)return;
-  editIsAdmin=!!asAdmin;editCurrentKey=key;
-  $('edit-modal-title').textContent=asAdmin?'Edit Booking (Approver)':'Edit Booking';
-  $('edit-modal-desc').textContent=asAdmin?'Changes are saved straight away. The status stays the same.':'Confirm your name to edit this pending booking.';
-  $('edit-verify-name').value='';$('edit-verify-error').textContent='';$('edit-error').classList.remove('visible');
-  if(asAdmin){$('edit-name-verify').style.display='none';populateEditForm(b);$('edit-form-fields').style.display='block';}
-  else{$('edit-name-verify').style.display='block';$('edit-form-fields').style.display='none';}
-  $('edit-modal').classList.remove('hidden');
-  setTimeout(function(){var f=asAdmin?$('e-vehicle'):$('edit-verify-name');if(f)f.focus();},50);
-}
-function verifyAndShowEdit(){
-  var b=findBooking(editCurrentKey);if(!b)return;
-  if($('edit-verify-name').value.trim().toLowerCase()!==String(b.name||'').trim().toLowerCase()){$('edit-verify-error').textContent='Name does not match.';return;}
-  $('edit-name-verify').style.display='none';populateEditForm(b);$('edit-form-fields').style.display='block';
-  $('edit-modal-desc').textContent='Update the details below and save.';
+  requireUser(true,'Only approvers can edit bookings. Your name is recorded on the change.',function(){
+    var b=findBooking(key);if(!b)return;
+    editIsAdmin=!!asAdmin;editCurrentKey=key;
+    $('edit-modal-title').textContent='Edit Booking';
+    $('edit-modal-desc').textContent='Editing as '+whoName()+'. The status stays the same.';
+    $('edit-error').classList.remove('visible');
+    populateEditForm(b);$('edit-form-fields').style.display='block';
+    $('edit-modal').classList.remove('hidden');
+    setTimeout(function(){var f=$('e-vehicle');if(f)f.focus();},50);
+  });
 }
 function populateEditForm(b){
   $('e-vehicle').value=veh(b.vehicle).id===b.vehicle?b.vehicle:VEHICLES[0].id;
-  $('e-site').value=b.site||'';$('e-supplier').value=b.supplier||'';$('e-sup-save-chk').checked=false;syncSupSave('e');$('e-from').value=b.from||'';$('e-to').value=b.to||'';
+  $('e-reqby').value=b.requestedBy||'';$('e-site').value=b.site||'';$('e-supplier').value=b.supplier||'';$('e-sup-save-chk').checked=false;syncSupSave('e');$('e-from').value=b.from||'';$('e-to').value=b.to||'';
   $('e-date').value=b.date||'';$('e-time').value=b.time||'';$('e-endtime').value=b.endtime||'';$('e-notes').value=b.notes||'';
   var lt=b.loadType||'',known=['Container','Plant / Machinery','Materials'];
   if(known.indexOf(lt)>=0){$('e-loadtype').value=lt;$('e-other-wrap').style.display='none';$('e-other-text').value='';}
   else{$('e-loadtype').value='Other';$('e-other-wrap').style.display='block';$('e-other-text').value=lt.replace(/^Other:?\s*/,'');}
 }
 function saveEdit(){
-  var u={vehicle:$('e-vehicle').value,site:$('e-site').value.trim(),supplier:canonicalSupplier($('e-supplier').value),from:$('e-from').value.trim(),to:$('e-to').value.trim(),date:$('e-date').value,time:$('e-time').value,endtime:$('e-endtime').value,notes:$('e-notes').value.trim()};
+  var u={vehicle:$('e-vehicle').value,requestedBy:canonicalRequester($('e-reqby').value),site:$('e-site').value.trim(),supplier:canonicalSupplier($('e-supplier').value),from:$('e-from').value.trim(),to:$('e-to').value.trim(),date:$('e-date').value,time:$('e-time').value,endtime:$('e-endtime').value,notes:$('e-notes').value.trim()};
   var errs=[];
-  if(!u.site)errs.push('Site Name');if(!u.from)errs.push('From');if(!u.to)errs.push('To');if(!u.date)errs.push('Date');if(!u.time)errs.push('Start Time');if(!u.endtime)errs.push('End Time');
+  if(!u.requestedBy)errs.push('Requested by');if(!u.site)errs.push('Site Name');if(!u.from)errs.push('From');if(!u.to)errs.push('To');if(!u.date)errs.push('Date');if(!u.time)errs.push('Start Time');if(!u.endtime)errs.push('End Time');
   var box=$('edit-error');
   function err(m){box.innerHTML=m;box.classList.add('visible');}
   if(errs.length){err('<strong>Please complete:</strong> '+errs.join(', '));return;}
@@ -945,7 +1140,9 @@ function saveEdit(){
   var lt=$('e-loadtype').value;
   if(lt==='Other'){var ot=$('e-other-text').value.trim();lt=ot?'Other: '+ot:'Other';}
   u.loadType=lt;
-  var saveSup=$('e-sup-save-chk').checked&&u.supplier,by=editIsAdmin?'Approver':(findBooking(editCurrentKey)||{}).name;
+  if(!isAdmin()){err('Your session has ended. Close this window and enter your code again.');return;}
+  u.editedBy=whoName();u.editedAt=new Date().toISOString();
+  var saveSup=$('e-sup-save-chk').checked&&u.supplier,by=whoName();
   updateBooking(editCurrentKey,u).then(function(){showToast('Booking updated!','#1B4FA8');closeEditModal();if(saveSup)setTimeout(function(){saveSupplier(u.supplier,by);},1200);}).catch(fail);
 }
 function closeEditModal(){$('edit-modal').classList.add('hidden');editCurrentKey=null;}
@@ -1002,8 +1199,8 @@ function showDay(dateStr,quiet){
     if(b.from||b.to)html+='<div style="font-size:13px;color:var(--muted)">🚚 '+esc(b.from||'—')+' → '+esc(b.to||'—')+'</div>';
     if(b.notes)html+='<div style="font-size:12px;color:var(--muted);font-style:italic">'+esc(b.notes)+'</div>';
     if(b.status==='declined'&&b.reason)html+='<div style="font-size:12px;color:#991B1B;font-style:italic">❌ Reason: '+esc(b.reason)+'</div>';
-    if(b.completedAt)html+='<div style="margin-top:6px"><span class="completed-stamp">🏁 Completed · '+fmtStamp(b.completedAt)+'</span></div>';
-    html+='<div style="font-size:11px;color:#9CA3AF;margin-top:4px">Submitted by '+esc(b.name)+'</div></div>';
+    if(b.completedAt)html+='<div style="margin-top:6px"><span class="completed-stamp">🏁 Completed'+(b.completedBy?' by '+esc(b.completedBy):'')+' · '+fmtStamp(b.completedAt)+'</span></div>';
+    html+=requestLine(b)+'<div style="font-size:11px;color:#9CA3AF;margin-top:4px">Booked by '+esc(b.name)+'</div>'+decisionLine(b)+'</div>';
   });
   $('day-detail-list').innerHTML=html;
   var panel=$('day-detail');panel.classList.add('visible');
@@ -1020,8 +1217,13 @@ $('pin-input').addEventListener('input',function(){$('pin-error').textContent=''
 $('btn-lock').addEventListener('click',adminLogout);
 $('btn-csv').addEventListener('click',exportCSV);
 $('btn-xlsx').addEventListener('click',exportExcel);
-$('btn-verify').addEventListener('click',verifyAndShowEdit);
-$('edit-verify-name').addEventListener('keydown',function(e){if(e.key==='Enter')verifyAndShowEdit();});
+$('btn-form-code').addEventListener('click',function(){gateSignIn('form-code','form-code-error',true);});
+$('form-code').addEventListener('keydown',function(e){if(e.key==='Enter')gateSignIn('form-code','form-code-error',true);});
+$('form-code').addEventListener('input',function(){$('form-code-error').textContent='';});
+$('btn-signin').addEventListener('click',submitSignin);
+$('signin-code').addEventListener('keydown',function(e){if(e.key==='Enter')submitSignin();});
+$('signin-code').addEventListener('input',function(){$('signin-error').textContent='';});
+$('signin-modal').addEventListener('click',function(e){if(e.target===this)closeSignin();});
 $('btn-save-edit').addEventListener('click',saveEdit);
 $('f-supplier').addEventListener('input',function(){syncSupSave('f');});
 $('e-supplier').addEventListener('input',function(){syncSupSave('e');});
@@ -1030,7 +1232,7 @@ $('sup-new').addEventListener('keydown',function(e){if(e.key==='Enter')addSuppli
 document.addEventListener('click',function(e){var b=e.target.closest('[data-act="sup-remove"]');if(b)removeSupplier(b.dataset.key);});
 $('e-loadtype').addEventListener('change',function(){$('e-other-wrap').style.display=this.value==='Other'?'block':'none';});
 $('edit-modal').addEventListener('click',function(e){if(e.target===this)closeEditModal();});
-document.addEventListener('keydown',function(e){if(e.key==='Escape'&&!$('edit-modal').classList.contains('hidden'))closeEditModal();});
+document.addEventListener('keydown',function(e){if(e.key==='Escape'){if(!$('signin-modal').classList.contains('hidden'))closeSignin();else if(!$('edit-modal').classList.contains('hidden'))closeEditModal();}});
 $('cal-prev').addEventListener('click',calPrev);
 $('cal-next').addEventListener('click',calNext);
 ['f-search','f-status','f-vehicle'].forEach(function(id){$(id).addEventListener(id==='f-search'?'input':'change',renderList);});
@@ -1048,40 +1250,38 @@ $('view-form').addEventListener('input',function(e){if(e.target.classList)e.targ
 document.addEventListener('keydown',function(e){
   if(e.key!=='Enter')return;
   var t=e.target;
-  if(t.dataset&&t.dataset.enter==='odo-unlock'){unlockOdo(t.closest('.odo-unlock'),t.dataset.key);}
-  else if(t.classList&&t.classList.contains('cal-day')&&t.dataset.date){showDay(t.dataset.date);}
+  if(t.classList&&t.classList.contains('cal-day')&&t.dataset.date){showDay(t.dataset.date);}
 });
-function unlockOdo(box,k){
-  var pin=box?box.querySelector('.odo-pin-input'):null;if(!pin)return;
-  if(pin.value===DRIVER_PIN){odoUnlocked[k]=true;box.querySelector('.odo-unlock-row').style.display='none';box.querySelector('.odo-fields').classList.add('visible');var first=box.querySelector('.odo-fields input');if(first)first.focus();}
-  else{pin.value='';pin.placeholder='Wrong PIN';pin.style.borderColor='#DC2626';setTimeout(function(){pin.placeholder='PIN';pin.style.borderColor='';},2000);}
-}
 document.addEventListener('click',function(e){
   var el=e.target.closest('[data-act]');if(!el)return;
   var act=el.dataset.act,k=el.dataset.key;
   switch(act){
     case 'close-modal':closeEditModal();break;
+    case 'close-signin':closeSignin();break;
+    case 'signin':requireUser(false,'Approvers and drivers each have their own code.',function(){});break;
+    case 'signout':signOut();break;
     case 'cal-filter':calVehFilter=el.dataset.veh||'';buildCalFilter();renderCalendar();break;
     case 'day':showDay(el.dataset.date);break;
     case 'edit':openEditModal(k,false);break;
     case 'admin-edit':openEditModal(k,true);break;
-    case 'complete':if(confirm('Mark this trip as completed?'))updateBooking(k,{completedAt:new Date().toISOString()}).then(function(){showToast('🏁 Trip marked as completed!','#0F766E');}).catch(fail);break;
-    case 'odo-unlock':unlockOdo(el.closest('.odo-unlock'),k);break;
-    case 'odo-save':var r=collectReadings(el.closest('.odo-fields'),true);if(r)updateBooking(k,r).then(function(){delete odoUnlocked[k];showToast('Readings saved!','#0F766E');}).catch(fail);break;
-    case 'odo-edit':odoEditOpen[k]=true;el.closest('.odo-readings-display').querySelector('.odo-edit-box').style.display='block';break;
+    case 'complete':requireUser(false,'Enter your code to mark this trip as completed.',function(){if(confirm('Mark this trip as completed?'))updateBooking(k,{completedAt:new Date().toISOString(),completedBy:whoName()}).then(function(){showToast('🏁 Trip marked as completed!','#0F766E');}).catch(fail);});break;
+    case 'odo-signin':requireUser(false,'Enter your code to capture the readings. Your name is recorded with them.',function(){});break;
+    case 'odo-save':if(!currentUser){requireUser(false,'Your session ended. Enter your code again.',function(){});break;}var r=collectReadings(el.closest('.odo-fields'),true);if(r){r.odoSavedBy=whoName();updateBooking(k,r).then(function(){showToast('Readings saved!','#0F766E');}).catch(fail);}break;
+    case 'odo-edit':requireUser(false,'Enter your code to edit the readings. Your name is recorded on the change.',function(){odoEditOpen[k]=true;renderAll();});break;
     case 'odo-cancel':delete odoEditOpen[k];el.closest('.odo-edit-box').style.display='none';break;
-    case 'odo-save-edit':var r2=collectReadings(el.closest('.odo-edit-box'),false);if(r2)updateBooking(k,r2).then(function(){delete odoEditOpen[k];showToast('Readings updated!','#0F766E');}).catch(fail);break;
+    case 'odo-save-edit':if(!currentUser){requireUser(false,'Your session ended. Enter your code again.',function(){});break;}var r2=collectReadings(el.closest('.odo-edit-box'),false);if(r2){r2.odoEditedBy=whoName();r2.odoEditedAt=r2.odoSavedAt;delete r2.odoSavedAt;updateBooking(k,r2).then(function(){delete odoEditOpen[k];showToast('Readings updated!','#0F766E');}).catch(fail);}break;
     case 'approve':approveBooking(k);break;
     case 'decline-toggle':declineOpen[k]=!declineOpen[k];var w=$('reason-wrap-'+k);if(w){w.classList.toggle('visible',!!declineOpen[k]);if(declineOpen[k])$('reason-'+k).focus();}break;
     case 'decline-confirm':declineBooking(k);break;
-    case 'reset':updateBooking(k,{status:'pending',reason:'',approvedAt:''}).catch(fail);break;
-    case 'delete':if(confirm('Permanently delete this booking?'))bookingsRef.child(k).remove().then(function(){showToast('Booking deleted.','#6B7280');}).catch(fail);break;
+    case 'reset':if(isAdmin())updateBooking(k,{status:'pending',reason:'',approvedAt:'',decidedBy:''}).catch(fail);break;
+    case 'delete':if(isAdmin()&&confirm('Permanently delete this booking?'))bookingsRef.child(k).remove().then(function(){showToast('Booking deleted.','#6B7280');}).catch(fail);break;
     case 'status-apply':var sel=$('status-sel-'+k);if(sel)changeStatus(k,sel.value);break;
   }
 });
 
 /* ---------- start ---------- */
 buildVehicleUI();
+loadSession();adminUnlocked=isAdmin();refreshAccess();
 $('f-date').min=todayStr();
 renderList();
 startDatabase();
